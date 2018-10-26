@@ -6,7 +6,8 @@
 
 void main(void)
 {
-  unsigned char inbyte, chkey, lch, cch;
+  unsigned char inbyte, chkey, chl, chc;
+
   chl=0;
   chc=0;
 
@@ -29,12 +30,20 @@ void main(void)
       // filter input here
 
 
-      cch = inbyte;
+      chc = inbyte;
 
-      // default output everything
-      //putch(inbyte);
-      printf("%c",inbyte);
-      //fputc_cons(inbyte);
+      if (chl==0xff && chc==0xff)  //catch Telnet IAC
+      {
+        //drop the character
+        chl=0;  //reset last character chc will over write
+      }
+      else
+      {
+        // default output everything
+        //putch(inbyte);
+        printf("%c",inbyte);
+        //fputc_cons(inbyte);
+      }
 
       //  quick keyboard check if we are reading alot so we can interupt
 
