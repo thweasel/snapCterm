@@ -1,4 +1,12 @@
 
+IF !DEFINED_ansicolumns
+	defc	DEFINED_ansicolumns = 1
+	defc ansicolumns = 128
+	IFNDEF ansicolumns
+	ENDIF
+ENDIF
+
+
 IF !NEED_ansiterminal
 	DEFINE	NEED_ansiterminal
 ENDIF
