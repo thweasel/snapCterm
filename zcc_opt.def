@@ -1,0 +1,5 @@
+
+IF !NEED_ansiterminal
+	DEFINE	NEED_ansiterminal
+ENDIF
+
