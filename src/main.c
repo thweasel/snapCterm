@@ -9,7 +9,7 @@
 
 void main(void)
 {
-  unsigned char inbyte, chkey, lastbyte, chl, chc;
+  unsigned char inbyte, chkey, lastbyte;
   lastbyte=0;
 
   // quick initalise serial port
