@@ -1,11 +1,25 @@
 // Compiler line (not using make)
 // zcc +zx -clib=ansi -pragma-define:ansicolumns=80 -lndos -lm -lrs232plus -create-app -subtype=wav main.c
+//zcc +zx  -clib=ansi -pragma-redirect:ansifont=_oemascii -pragma-define:ansifont_is_packed=0 -pragma-define:ansicolumns=80 -lndos -lm -lrs232plus -create-app -subtype=wav
 
 #include <conio.h>
 #include <stdio.h>
 #include <spectrum.h>
 #include <rs232.h>
 #include <input.h>
+
+//Font stuff
+#asm  
+SECTION data_user ;
+
+PUBLIC _oemascii
+_oemascii:
+    BINARY "./src/oemascii.bin" ;  //  This BINARY holds the first 127 characters
+    BINARY "./src/oemasciiext.bin" ;  // This BINARY holds the last 127 (128 - 255) characters, it gets parked behind the first set
+#endasm
+
+
+
 
 void main(void)
 {
