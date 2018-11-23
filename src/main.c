@@ -18,8 +18,19 @@ _oemascii:
     BINARY "./src/oemasciiext.bin" ;  // This BINARY holds the last 127 (128 - 255) characters, it gets parked behind the first set
 #endasm
 
-
-
+void scrollfix(uint_fast8_t col)
+{  // Ivan Blajer trick, start address is the start of the last row
+#asm
+    ld hl,2 // First address on stack is return address
+    add hl,sp // hence move two bytes below HL now points to where 
+    ld a,(hl) // our passed variable col sits now put the value into A
+    ld hl,23264 // this just fills the attribute area with the value of A
+    ld de,23265 // display is 2 bytes!!!
+    ld bc,32    //number of columns to colour
+    ld (hl),a
+    ldir
+#endasm
+}
 
 void main(void)
 {
