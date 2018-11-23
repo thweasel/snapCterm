@@ -49,6 +49,9 @@ void main(void)
   zx_border(INK_BLACK);
   clg();
   zx_colour(PAPER_WHITE|INK_BLACK);
+  
+  //ANSI ESCAPE codes TO SET UP
+  cprintf("\033[37;40m");  // esc [ ESC SEQUENCE (Foreground)White;(Background)Black m (to terminate)
 
   // main loop
   printf("Terminal ready...");
@@ -57,10 +60,10 @@ void main(void)
     if(rs232_get(&inbyte)!=RS_ERR_NO_DATA)  //any incoming data capture and print
     {
 
-      rxdata[0]=inbyte;        //Buffer the first character
-      bytes = 10;             //Maximum number of bytes to read in.
+      rxdata[0]=inbyte;         //Buffer the first character
+      bytes = 10;               //Maximum number of bytes to read in.
 
-      for (uint8_t i=1;i<bytes;i++)  //Loop to buffer in up to 10 characters
+      for (uint8_t i=1;i<bytes;i++)   //Loop to buffer in up to 10 characters
       {
         if (rs232_get(&inbyte) != RS_ERR_NO_DATA)  //If character add it to the buffer
         {
@@ -74,7 +77,7 @@ void main(void)
 
       }      
 
-      for (uint8_t i=1;i<bytes;i++) //Loop to output the buffer
+      for (uint8_t i=1;i<bytes;i++)   //Loop to output the buffer
       {
 
         // filter input here
