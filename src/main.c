@@ -48,7 +48,7 @@ void main(void)
   // Clean up the screen
   zx_border(INK_BLACK);
   clg();
-  zx_colour(PAPER_WHITE|INK_BLACK);
+  zx_colour(PAPER_BLACK|INK_WHITE);
   
   //ANSI ESCAPE codes TO SET UP
   cprintf("\033[37;40m");  // esc [ ESC SEQUENCE (Foreground)White;(Background)Black m (to terminate)
@@ -98,8 +98,8 @@ void main(void)
         else  // default output the character to the screen
         {
           //Slam a "SPACE" then "BACKSPACE" in to the console to trigger scroll but not move the cursor
-          fputc_cons(32);
-          fputc_cons(8);      
+          fputc_cons(32);  //ANSI Space
+          fputc_cons(8);   //ANSI Backspace
           if (7 != zx_attr(23,31))
           {
             scrollfix(7);  // Call the modded Ivan code to blat the attribs in the bottom row. (White ink Black paper)
