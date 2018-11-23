@@ -32,9 +32,13 @@ void scrollfix(uint_fast8_t col)
 #endasm
 }
 
+unsigned char inbyte, chkey, lastbyte;
+static uint8_t bytes=10;
+char rxdata[10];
+
 void main(void)
 {
-  unsigned char inbyte, chkey, lastbyte;
+  
   lastbyte=0;
 
   // quick initalise serial port
@@ -52,39 +56,60 @@ void main(void)
   {
     if(rs232_get(&inbyte)!=RS_ERR_NO_DATA)  //any incoming data capture and print
     {
-      // filter input here
 
-      if (lastbyte==0xff && inbyte==0xff)  //catch Telnet IAC drop it
-      {
-        inbyte=0;  //reset inbyte
-      }
-      else if (inbyte==0x0d)  // Catch Carriage Return
-      {  // could be left out as 0x0d triggers a new line if printed to screen
-        printf("\n");
-        inbyte=0;  //reset inbyte
-      }
-      else if (inbyte==0x0a)  // Catch Line Feed
-      {
-        inbyte=0;  //reset inbyte
-      }
-      else  // default output the character to the screen
-      {
-        fputc_cons(inbyte);
-      }
+      rxdata[0]=inb;        //Buffer the first character
+      bytes = 10;             //Maximum number of bytes to read in.
 
-      lastbyte=inbyte;
-
-      //  quick keyboard check if we are reading alot so we can interupt
-
-      for (int i=5; i>0; i--)
+      for (uint8_t i=1;i<bytes;i++)  //Loop to buffer in up to 10 characters
       {
-        chkey = getk();
-        if (chkey != NULL)
+        if (rs232_get(&inb) != RS_ERR_NO_DATA)  //If character add it to the buffer
         {
-          rs232_put(chkey);
+          rxdata[i]=inb;
         }
-      }
+        else  //Else no character record the number of bytes we have collected
+        {
+          bytes = i;
+          i = 254; //kill the for loop
+        }
 
+      }      
+
+      for (uint8_t i=1;i<bytes;i++) //Loop to output the buffer
+      {
+
+        // filter input here
+
+        if (lastbyte==0xff && inbyte==0xff)  //catch Telnet IAC drop it
+        {
+          inbyte=0;  //reset inbyte
+        }
+        else if (inbyte==0x0d)  // Catch Carriage Return
+        {  // could be left out as 0x0d triggers a new line if printed to screen
+          printf("\n");
+          inbyte=0;  //reset inbyte
+        }
+        else if (inbyte==0x0a)  // Catch Line Feed
+        {
+          inbyte=0;  //reset inbyte
+        }
+        else  // default output the character to the screen
+        {
+          fputc_cons(inbyte);
+        }
+
+        lastbyte=inbyte;
+
+        //  quick keyboard check if we are reading alot so we can interupt
+        for (int i=5; i>0; i--)
+        {
+          chkey = getk();
+          if (chkey != NULL)
+          {
+            rs232_put(chkey);
+          }
+        }
+
+      }
     }
     else //no incoming data check keyboard
     {
