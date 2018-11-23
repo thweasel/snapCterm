@@ -57,14 +57,14 @@ void main(void)
     if(rs232_get(&inbyte)!=RS_ERR_NO_DATA)  //any incoming data capture and print
     {
 
-      rxdata[0]=inb;        //Buffer the first character
+      rxdata[0]=inbyte;        //Buffer the first character
       bytes = 10;             //Maximum number of bytes to read in.
 
       for (uint8_t i=1;i<bytes;i++)  //Loop to buffer in up to 10 characters
       {
-        if (rs232_get(&inb) != RS_ERR_NO_DATA)  //If character add it to the buffer
+        if (rs232_get(&inbyte) != RS_ERR_NO_DATA)  //If character add it to the buffer
         {
-          rxdata[i]=inb;
+          rxdata[i]=inbyte;
         }
         else  //Else no character record the number of bytes we have collected
         {
