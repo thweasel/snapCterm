@@ -94,6 +94,14 @@ void main(void)
         }
         else  // default output the character to the screen
         {
+          //Slam a "SPACE" then "BACKSPACE" in to the console to trigger scroll but not move the cursor
+          fputc_cons(32);
+          fputc_cons(8);      
+          if (7 != zx_attr(23,31))
+          {
+            scrollfix(7);  // Call the modded Ivan code to blat the attribs in the bottom row. (White ink Black paper)
+          }
+          //Safe to print out character
           fputc_cons(inbyte);
         }
 
