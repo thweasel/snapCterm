@@ -77,8 +77,9 @@ void main(void)
 
       }      
 
-      for (uint8_t i=1;i<bytes;i++)   //Loop to output the buffer
+      for (uint8_t i=0;i<bytes;i++)   //Loop to output the buffer
       {
+        inbyte = rxdata[i];
 
         // filter input here
 
