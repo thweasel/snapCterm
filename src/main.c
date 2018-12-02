@@ -32,6 +32,25 @@ void scrollfix(uint_fast8_t col)
 #endasm
 }
 
+void newline_attr()
+{//Allen Albright's method
+    unsigned char row_attr;
+    unsigned char *attr;
+
+    row_attr = 23;
+    attr = zx_cyx2aaddr(23,31);
+
+    do
+    {
+        if (7 != *attr)
+        memset(attr - 31, 7, 32);
+
+        attr = zx_aaddrcup(attr);
+    }
+    while (row_attr-- != 0);
+
+}
+
 unsigned char inbyte, chkey, lastbyte;
 static uint8_t bytes=10;
 char rxdata[10];
@@ -59,7 +78,7 @@ void main(void)
   {
     if(rs232_get(&inbyte)!=RS_ERR_NO_DATA)  //any incoming data capture and print
     {
-
+      zx_border(RED);
       rxdata[0]=inbyte;         //Buffer the first character
       bytes = 10;               //Maximum number of bytes to read in.
 
@@ -84,20 +103,35 @@ void main(void)
         // filter input here
 
         if (lastbyte==0xff && inbyte==0xff)  //catch Telnet IAC drop it
+        //if(inbyte==0xff)
         {
+          //fputc_cons(inbyte);
           inbyte=0;  //reset inbyte
         }
         else if (inbyte==0x0d)  // Catch Carriage Return
         {  // could be left out as 0x0d triggers a new line if printed to screen
-          printf("\n");
-          inbyte=0;  //reset inbyte
+          //printf("\n");
+          //inbyte=0;  //reset inbyte
+          
+          //fputc_cons(inbyte);
+          //newline_attr();
+
         }
         else if (inbyte==0x0a)  // Catch Line Feed
         {
-          inbyte=0;  //reset inbyte
+          //fputc_cons(inbyte);
+          //newline_attr();   
         }
-        else  // default output the character to the screen
+        else if (lastbyte==0x0d && inbyte==0x0a)  // Catch Line Feed
         {
+
+          fputc_cons(inbyte);
+          newline_attr();          
+          //inbyte=0;  //reset inbyte
+        }
+        else  // default output the character to the screen 
+        {
+          /*
           //Slam a "SPACE" then "BACKSPACE" in to the console to trigger scroll but not move the cursor
           fputc_cons(32);  //ANSI Space
           fputc_cons(8);   //ANSI Backspace
@@ -107,6 +141,21 @@ void main(void)
           }
           //Safe to print out character
           fputc_cons(inbyte);
+          */
+
+          fputc_cons(inbyte);
+
+          if (7 != zx_attr(23,31))
+          {
+            //scrollfix(7);  // Call the modded Ivan code to blat the attribs in the bottom row. (White ink Black paper)
+            //fputc_cons(inbyte);
+
+            newline_attr();
+
+          }
+
+
+
         }
 
         lastbyte=inbyte;
@@ -118,6 +167,7 @@ void main(void)
           if (chkey != NULL)
           {
             rs232_put(chkey);
+            chkey = NULL;
           }
         }
 
@@ -125,12 +175,14 @@ void main(void)
     }
     else //no incoming data check keyboard
     {
-      for (int i=20; i>0; i--)
+      zx_border(CYAN);
+      for (int i=60; i>0; i--)
       {
         chkey = getk();
         if (chkey != NULL)
         {
           rs232_put(chkey);
+          chkey = NULL;
         }
       }
     }
