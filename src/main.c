@@ -7,6 +7,8 @@
 #include <spectrum.h>
 #include <rs232.h>
 #include <input.h>
+#include <string.h>
+
 
 //Font stuff
 #asm  
@@ -147,7 +149,7 @@ void main(void)
 
           if (7 != zx_attr(23,31))
           {
-            //scrollfix(7);  // Call the modded Ivan code to blat the attribs in the bottom row. (White ink Black paper)
+            //scrollfix(7);  // Call the modded Ivan code to blat the 4:3 monitor hdmiattribs in the bottom row. (White ink Black paper)
             //fputc_cons(inbyte);
 
             newline_attr();
