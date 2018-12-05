@@ -80,7 +80,7 @@ void main(void)
   {
     if(rs232_get(&inbyte)!=RS_ERR_NO_DATA)  //any incoming data capture and print
     {
-      zx_border(RED);
+      zx_border(INK_RED);
       rxdata[0]=inbyte;         //Buffer the first character
       bytes = 10;               //Maximum number of bytes to read in.
 
@@ -110,76 +110,65 @@ void main(void)
           //fputc_cons(inbyte);
           inbyte=0;  //reset inbyte
         }
-        else if (inbyte==0x0d)  // Catch Carriage Return
+        else if (inbyte == 0x09) // TAB
+        {
+          //fputc_cons(0x07);  // BEEP
+          fputc_cons(inbyte);
+
+        }        
+        else if (inbyte == 0x0c) // Clear screen and home cursor
+        {
+          //fputc_cons(0x07);  // BEEP
+          fputc_cons(inbyte);
+        }
+        else if (inbyte==0x0d)  // Carriage Return
         {  // could be left out as 0x0d triggers a new line if printed to screen
-          //printf("\n");
-          //inbyte=0;  //reset inbyte
           
-          //fputc_cons(inbyte);
-          //newline_attr();
+          fputc_cons(inbyte);
+          newline_attr();
 
         }
-        else if (inbyte==0x0a)  // Catch Line Feed
-        {
+        else if (inbyte==0x0a)  // Line Feed
+        { // DO NOTHING
           //fputc_cons(inbyte);
           //newline_attr();   
+          //fputc_cons(0x07);  // BEEP
         }
-        else if (lastbyte==0x0d && inbyte==0x0a)  // Catch Line Feed
+        else if (lastbyte==0x0d && inbyte==0x0a)  // Carriage Return && Line Feed combo
         {
-
           fputc_cons(inbyte);
           newline_attr();          
           //inbyte=0;  //reset inbyte
         }
         else  // default output the character to the screen 
         {
-          /*
-          //Slam a "SPACE" then "BACKSPACE" in to the console to trigger scroll but not move the cursor
-          fputc_cons(32);  //ANSI Space
-          fputc_cons(8);   //ANSI Backspace
-          if (7 != zx_attr(23,31))
-          {
-            scrollfix(7);  // Call the modded Ivan code to blat the attribs in the bottom row. (White ink Black paper)
-          }
-          //Safe to print out character
           fputc_cons(inbyte);
-          */
-
-          fputc_cons(inbyte);
-
-          if (7 != zx_attr(23,31))
+          if (7 != zx_attr(23,31))  // FIX SCROLL ISSUE
           {
-            //scrollfix(7);  // Call the modded Ivan code to blat the 4:3 monitor hdmiattribs in the bottom row. (White ink Black paper)
-            //fputc_cons(inbyte);
-
             newline_attr();
-
           }
-
-
-
         }
 
         lastbyte=inbyte;
 
         //  quick keyboard check if we are reading alot so we can interupt
-        for (int i=5; i>0; i--)
+        zx_border(INK_CYAN);
+        chkey = getk();
+        if (chkey != NULL)
         {
-          chkey = getk();
-          if (chkey != NULL)
-          {
-            rs232_put(chkey);
-            chkey = NULL;
-          }
+          rs232_put(chkey);
+          chkey = NULL;
         }
 
       }
     }
     else //no incoming data check keyboard
     {
-      zx_border(CYAN);
-      for (int i=60; i>0; i--)
+      zx_border(INK_CYAN);
+      for (int i=20; i>0; i--)
       {
+         in_Pause(1);
+
         chkey = getk();
         if (chkey != NULL)
         {
