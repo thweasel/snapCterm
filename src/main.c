@@ -21,8 +21,7 @@ SECTION data_user ;
 
 PUBLIC _oemascii
 _oemascii:
-//    BINARY "./src/oemascii.bin" ;  //  This BINARY holds the first 127 characters
-//    BINARY "./src/oemasciiext.bin" ;  // This BINARY holds the last 127 (128 - 255) characters, it gets parked behind the first set
+      //Files must be loaded in order of lowest value to highest
       BINARY "./src/oemasciiext1.bin.chr" ;
       BINARY "./src/oemasciiext2.bin.chr" ;
       BINARY "./src/oemasciiext3.bin.chr" ;
