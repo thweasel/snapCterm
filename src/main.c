@@ -9,6 +9,11 @@
 #include <input.h>
 #include <string.h>
 
+//GLOBALS
+unsigned char inbyte, chkey, lastbyte;
+static uint8_t bytes=10;
+char rxdata[10];
+
 
 //Font stuff
 #asm  
@@ -16,8 +21,11 @@ SECTION data_user ;
 
 PUBLIC _oemascii
 _oemascii:
-    BINARY "./src/oemascii.bin" ;  //  This BINARY holds the first 127 characters
-    BINARY "./src/oemasciiext.bin" ;  // This BINARY holds the last 127 (128 - 255) characters, it gets parked behind the first set
+//    BINARY "./src/oemascii.bin" ;  //  This BINARY holds the first 127 characters
+//    BINARY "./src/oemasciiext.bin" ;  // This BINARY holds the last 127 (128 - 255) characters, it gets parked behind the first set
+      BINARY "./src/oemasciiext1.bin.chr" ;
+      BINARY "./src/oemasciiext2.bin.chr" ;
+      BINARY "./src/oemasciiext3.bin.chr" ;
 #endasm
 
 void scrollfix(uint_fast8_t col)
@@ -53,9 +61,28 @@ void newline_attr()
 
 }
 
-unsigned char inbyte, chkey, lastbyte;
-static uint8_t bytes=10;
-char rxdata[10];
+void KeyRead(int time_ms)
+{
+  zx_border(INK_CYAN);
+  do
+  {
+    in_Pause(1);
+
+    chkey = getk();
+    if(chkey ==0x0C) // Key == Back Space (0x0C == Form feed)
+    {
+      rs232_put(0x08);
+    }
+    else if (chkey != NULL)
+    {
+      rs232_put(chkey);
+    }
+    chkey = NULL;
+  }while(--time_ms>0);
+
+}
+
+
 
 void main(void)
 {
@@ -152,30 +179,14 @@ void main(void)
         lastbyte=inbyte;
 
         //  quick keyboard check if we are reading alot so we can interupt
-        zx_border(INK_CYAN);
-        chkey = getk();
-        if (chkey != NULL)
-        {
-          rs232_put(chkey);
-          chkey = NULL;
-        }
+        KeyRead(1);
 
       }
     }
     else //no incoming data check keyboard
     {
-      zx_border(INK_CYAN);
-      for (int i=20; i>0; i--)
-      {
-         in_Pause(1);
+      KeyRead(20);
 
-        chkey = getk();
-        if (chkey != NULL)
-        {
-          rs232_put(chkey);
-          chkey = NULL;
-        }
-      }
     }
 
   }
