@@ -62,7 +62,7 @@ void newline_attr()
 
 void KeyRead(int time_ms)
 {
-  zx_border(INK_CYAN);
+  zx_border(INK_BLACK);
   do
   {
     in_Pause(1);
@@ -104,9 +104,11 @@ void main(void)
   printf("Terminal ready...");
   while(1)
   {
+    //RXDATA
+    
     if(rs232_get(&inbyte)!=RS_ERR_NO_DATA)  //any incoming data capture and print
     {
-      zx_border(INK_RED);
+      zx_border(INK_WHITE);
       rxdata[0]=inbyte;         //Buffer the first character
       bytes = 10;               //Maximum number of bytes to read in.
 
@@ -124,6 +126,9 @@ void main(void)
 
       }      
 
+      //WRITE SCREEN
+      //zx_border(INK_GREEN);
+      zx_border(INK_BLACK);
       for (uint8_t i=0;i<bytes;i++)   //Loop to output the buffer
       {
         inbyte = rxdata[i];
@@ -185,7 +190,6 @@ void main(void)
     else //no incoming data check keyboard
     {
       KeyRead(20);
-
     }
 
   }
