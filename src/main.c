@@ -11,9 +11,10 @@
 
 //GLOBALS
 unsigned char inbyte, chkey, lastbyte;
-char rxdata[10];
-//static uint8_t bytes=10;
-static uint8_t bytes=sizeof(rxdata);
+char rxdata[18];
+
+//static int bytes,i;
+static unsigned char bytes,i;
 
 //Font stuff
 #asm  
@@ -60,12 +61,15 @@ void newline_attr()
 
 }
 
-void KeyRead(int time_ms)
+void KeyRead(unsigned char time_ms, unsigned char repeat)
 {
-  zx_border(INK_BLACK);
+  zx_border(INK_GREEN);
   do
   {
-    in_Pause(1);
+    if(time_ms>0)
+    {
+      in_Pause(time_ms);
+    }
 
     chkey = getk();
     if(chkey ==0x0C) // Key == Back Space (0x0C == Form feed)
@@ -77,8 +81,57 @@ void KeyRead(int time_ms)
       rs232_put(chkey);
     }
     chkey = NULL;
-  }while(--time_ms>0);
+  }while(--repeat!=0);
+}
 
+
+void KeyReadMulti(unsigned char time_ms, unsigned char repeat)
+{
+  unsigned char txdata[20];
+  unsigned char txbytes = 0;
+  txdata[0]=NULL;
+  //zx_border(INK_RED);
+  do
+  {
+    if(time_ms>0)
+    {
+      in_Pause(time_ms);
+    }
+
+    if (txbytes < sizeof(txdata))
+    {    
+      chkey = getk();
+      if (chkey != NULL)
+      {
+        if(chkey ==0x0C) // Key == Back Space (0x0C == Form feed)
+        {
+          //rs232_put(0x08);
+          txdata[txbytes] = 0x08;
+          ++txbytes;
+        }
+        else if (chkey != NULL)
+        {
+          //rs232_put(chkey);
+          txdata[txbytes] = chkey;
+          ++txbytes;
+        }
+      }
+      chkey = NULL;
+    }
+    else 
+    {
+      repeat = 0;
+    }    
+  }while(--repeat!=0);
+
+  if(txbytes>0)
+  {
+    zx_border(INK_YELLOW);
+    for (unsigned char j=0;j<txbytes;j++)
+    {
+      rs232_put(txdata[j]);
+    }   
+  } 
 }
 
 
@@ -113,7 +166,9 @@ void main(void)
       //bytes = 10;               //Maximum number of bytes to read in.
       bytes = sizeof(rxdata);
 
-      for (uint8_t i=1;i<bytes;i++)   //Loop to buffer in up to 10 characters
+      //for (int i=1;i<bytes;i++)   //Loop to buffer in up to 10 characters
+      i=1;
+      do
       {
         if (rs232_get(&inbyte) != RS_ERR_NO_DATA)  //If character add it to the buffer
         {
@@ -122,16 +177,20 @@ void main(void)
         else  //Else no character record the number of bytes we have collected
         {
           bytes = i;
-          i = 254; //kill the for loop
+          i = sizeof(rxdata)+1; //kill the for loop
         }
 
-      }      
+      }while(++i<bytes);
+      
 
       //WRITE SCREEN
       //zx_border(INK_GREEN);
-      zx_border(INK_BLACK);
-      for (uint8_t i=0;i<bytes;i++)   //Loop to output the buffer
+      
+      //for (int i=0;i<bytes;i++)   //Loop to output the buffer
+      i=0;
+      do
       {
+        zx_border(INK_BLACK);
         inbyte = rxdata[i];
 
         // filter input here
@@ -184,13 +243,15 @@ void main(void)
         lastbyte=inbyte;
 
         //  quick keyboard check if we are reading alot so we can interupt
-        KeyRead(1);
+        zx_border(INK_CYAN);
+        KeyReadMulti(0,1);
 
-      }
+      }while(++i<bytes);
     }
     else //no incoming data check keyboard
     {
-      KeyRead(20);
+      zx_border(INK_RED);
+      KeyReadMulti(10,20);
     }
 
   }
