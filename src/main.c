@@ -11,9 +11,9 @@
 
 //GLOBALS
 unsigned char inbyte, chkey, lastbyte;
-static uint8_t bytes=10;
 char rxdata[10];
-
+//static uint8_t bytes=10;
+static uint8_t bytes=sizeof(rxdata);
 
 //Font stuff
 #asm  
@@ -110,7 +110,8 @@ void main(void)
     {
       zx_border(INK_WHITE);
       rxdata[0]=inbyte;         //Buffer the first character
-      bytes = 10;               //Maximum number of bytes to read in.
+      //bytes = 10;               //Maximum number of bytes to read in.
+      bytes = sizeof(rxdata);
 
       for (uint8_t i=1;i<bytes;i++)   //Loop to buffer in up to 10 characters
       {
