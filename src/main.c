@@ -7,6 +7,13 @@
 #include <spectrum.h>
 #include <rs232.h>
 #include <input.h>
+#include <string.h>
+
+//GLOBALS
+unsigned char inbyte, chkey, lastbyte;
+static uint8_t bytes=10;
+char rxdata[10];
+
 
 //Font stuff
 #asm  
@@ -14,8 +21,10 @@ SECTION data_user ;
 
 PUBLIC _oemascii
 _oemascii:
-    BINARY "./src/oemascii.bin" ;  //  This BINARY holds the first 127 characters
-    BINARY "./src/oemasciiext.bin" ;  // This BINARY holds the last 127 (128 - 255) characters, it gets parked behind the first set
+      //Files must be loaded in order of lowest value to highest
+      BINARY "./src/oemasciiext1.bin.chr" ;
+      BINARY "./src/oemasciiext2.bin.chr" ;
+      BINARY "./src/oemasciiext3.bin.chr" ;
 #endasm
 
 void scrollfix(uint_fast8_t col)
@@ -32,9 +41,51 @@ void scrollfix(uint_fast8_t col)
 #endasm
 }
 
+void newline_attr()
+{//Allen Albright's method
+    unsigned char row_attr;
+    unsigned char *attr;
+
+    row_attr = 23;
+    attr = zx_cyx2aaddr(23,31);
+
+    do
+    {
+        if (7 != *attr)
+        memset(attr - 31, 7, 32);
+
+        attr = zx_aaddrcup(attr);
+    }
+    while (row_attr-- != 0);
+
+}
+
+void KeyRead(int time_ms)
+{
+  zx_border(INK_BLACK);
+  do
+  {
+    in_Pause(1);
+
+    chkey = getk();
+    if(chkey ==0x0C) // Key == Back Space (0x0C == Form feed)
+    {
+      rs232_put(0x08);
+    }
+    else if (chkey != NULL)
+    {
+      rs232_put(chkey);
+    }
+    chkey = NULL;
+  }while(--time_ms>0);
+
+}
+
+
+
 void main(void)
 {
-  unsigned char inbyte, chkey, lastbyte;
+  
   lastbyte=0;
 
   // quick initalise serial port
@@ -44,58 +95,101 @@ void main(void)
   // Clean up the screen
   zx_border(INK_BLACK);
   clg();
-  zx_colour(PAPER_WHITE|INK_BLACK);
+  zx_colour(PAPER_BLACK|INK_WHITE);
+  
+  //ANSI ESCAPE codes TO SET UP
+  cprintf("\033[37;40m");  // esc [ ESC SEQUENCE (Foreground)White;(Background)Black m (to terminate)
 
   // main loop
   printf("Terminal ready...");
   while(1)
   {
+    //RXDATA
+    
     if(rs232_get(&inbyte)!=RS_ERR_NO_DATA)  //any incoming data capture and print
     {
-      // filter input here
+      zx_border(INK_WHITE);
+      rxdata[0]=inbyte;         //Buffer the first character
+      bytes = 10;               //Maximum number of bytes to read in.
 
-      if (lastbyte==0xff && inbyte==0xff)  //catch Telnet IAC drop it
+      for (uint8_t i=1;i<bytes;i++)   //Loop to buffer in up to 10 characters
       {
-        inbyte=0;  //reset inbyte
-      }
-      else if (inbyte==0x0d)  // Catch Carriage Return
-      {  // could be left out as 0x0d triggers a new line if printed to screen
-        printf("\n");
-        inbyte=0;  //reset inbyte
-      }
-      else if (inbyte==0x0a)  // Catch Line Feed
-      {
-        inbyte=0;  //reset inbyte
-      }
-      else  // default output the character to the screen
-      {
-        fputc_cons(inbyte);
-      }
-
-      lastbyte=inbyte;
-
-      //  quick keyboard check if we are reading alot so we can interupt
-
-      for (int i=5; i>0; i--)
-      {
-        chkey = getk();
-        if (chkey != NULL)
+        if (rs232_get(&inbyte) != RS_ERR_NO_DATA)  //If character add it to the buffer
         {
-          rs232_put(chkey);
+          rxdata[i]=inbyte;
         }
-      }
+        else  //Else no character record the number of bytes we have collected
+        {
+          bytes = i;
+          i = 254; //kill the for loop
+        }
 
+      }      
+
+      //WRITE SCREEN
+      //zx_border(INK_GREEN);
+      zx_border(INK_BLACK);
+      for (uint8_t i=0;i<bytes;i++)   //Loop to output the buffer
+      {
+        inbyte = rxdata[i];
+
+        // filter input here
+
+        if (lastbyte==0xff && inbyte==0xff)  //catch Telnet IAC drop it
+        //if(inbyte==0xff)
+        {
+          //fputc_cons(inbyte);
+          inbyte=0;  //reset inbyte
+        }
+        else if (inbyte == 0x09) // TAB
+        {
+          //fputc_cons(0x07);  // BEEP
+          fputc_cons(inbyte);
+
+        }        
+        else if (inbyte == 0x0c) // Clear screen and home cursor
+        {
+          //fputc_cons(0x07);  // BEEP
+          fputc_cons(inbyte);
+        }
+        else if (inbyte==0x0d)  // Carriage Return
+        {  // could be left out as 0x0d triggers a new line if printed to screen
+          
+          fputc_cons(inbyte);
+          newline_attr();
+
+        }
+        else if (inbyte==0x0a)  // Line Feed
+        { // DO NOTHING
+          //fputc_cons(inbyte);
+          //newline_attr();   
+          //fputc_cons(0x07);  // BEEP
+        }
+        else if (lastbyte==0x0d && inbyte==0x0a)  // Carriage Return && Line Feed combo
+        {
+          fputc_cons(inbyte);
+          newline_attr();          
+          //inbyte=0;  //reset inbyte
+        }
+        else  // default output the character to the screen 
+        {
+          fputc_cons(inbyte);
+          if (7 != zx_attr(23,31))  // FIX SCROLL ISSUE
+          {
+            newline_attr();
+          }
+        }
+
+        lastbyte=inbyte;
+
+        //  quick keyboard check if we are reading alot so we can interupt
+        KeyRead(1);
+
+      }
     }
     else //no incoming data check keyboard
     {
-      for (int i=20; i>0; i--)
-      {
-        chkey = getk();
-        if (chkey != NULL)
-        {
-          rs232_put(chkey);
-        }
-      }
+      KeyRead(20);
     }
 
   }
