@@ -8,13 +8,14 @@
 #include <rs232.h>
 #include <input.h>
 #include <string.h>
+#include <sound.h>  // sound for keyboard click
 
 //GLOBALS
 unsigned char inbyte, chkey, lastbyte;
 char rxdata[18];
 
 //static int bytes,i;
-static unsigned char bytes,i;
+static unsigned char bytes,bytecount;
 
 //Font stuff
 #asm  
@@ -28,7 +29,7 @@ _oemascii:
       BINARY "./src/oemasciiext3.bin.chr" ;
 #endasm
 
-void scrollfix(uint_fast8_t col)
+void scrollfix(uint_fast8_t col)  //NOT IN USE
 {  // Ivan Blajer trick, start address is the start of the last row
 #asm
     ld hl,2 // First address on stack is return address
@@ -61,9 +62,23 @@ void newline_attr()
 
 }
 
-void KeyRead(unsigned char time_ms, unsigned char repeat)
+void keyboard_click(void)
+{//Thomas Cherryhomes key click
+
+  unsigned char i,j;
+  for (i=0;i<=10;i++)
+    {
+      bit_click();
+      for (j=0;j<4;j++)
+	{
+	}
+    }
+
+}
+
+void KeyRead(unsigned char time_ms, unsigned char repeat)  //NOT IN USE
 {
-  zx_border(INK_GREEN);
+  //zx_border(INK_GREEN);  //DEBUG-TIMING
   do
   {
     if(time_ms>0)
@@ -74,23 +89,25 @@ void KeyRead(unsigned char time_ms, unsigned char repeat)
     chkey = getk();
     if(chkey ==0x0C) // Key == Back Space (0x0C == Form feed)
     {
+      keyboard_click();
       rs232_put(0x08);
     }
     else if (chkey != NULL)
     {
+      keyboard_click();
       rs232_put(chkey);
     }
-    chkey = NULL;
+    //chkey = NULL;
   }while(--repeat!=0);
 }
 
 
 void KeyReadMulti(unsigned char time_ms, unsigned char repeat)
 {
-  unsigned char txdata[20];
+  unsigned char txdata[5];  //Way more than needed in testing i can hardly hit 2 characters
   unsigned char txbytes = 0;
   txdata[0]=NULL;
-  //zx_border(INK_RED);
+  //zx_border(INK_RED);  //DEBUG-TIMING
   do
   {
     if(time_ms>0)
@@ -103,15 +120,15 @@ void KeyReadMulti(unsigned char time_ms, unsigned char repeat)
       chkey = getk();
       if (chkey != NULL)
       {
+        keyboard_click();
+
         if(chkey ==0x0C) // Key == Back Space (0x0C == Form feed)
         {
-          //rs232_put(0x08);
           txdata[txbytes] = 0x08;
           ++txbytes;
         }
         else if (chkey != NULL)
         {
-          //rs232_put(chkey);
           txdata[txbytes] = chkey;
           ++txbytes;
         }
@@ -124,13 +141,19 @@ void KeyReadMulti(unsigned char time_ms, unsigned char repeat)
     }    
   }while(--repeat!=0);
 
+  
+
   if(txbytes>0)
   {
-    zx_border(INK_YELLOW);
+    //printf("txbytes = %d",txbytes);  //DEBUG-TXBUFFER
+    //zx_border(INK_YELLOW);  //DEBUG-TIMING
+    //zx_border(txbytes);  //DEBUG-TXBUFFER
     for (unsigned char j=0;j<txbytes;j++)
     {
       rs232_put(txdata[j]);
+      //printf("%c",txdata[j]);  //DEBUG-TXBUFFER
     }   
+    //printf("\n");  //DEBUG-TXBUFFER
   } 
 }
 
@@ -152,6 +175,8 @@ void main(void)
   
   //ANSI ESCAPE codes TO SET UP
   cprintf("\033[37;40m");  // esc [ ESC SEQUENCE (Foreground)White;(Background)Black m (to terminate)
+  cprintf("\033[?25h");  //Show cursor?
+  
 
   // main loop
   printf("Terminal ready...");
@@ -161,37 +186,36 @@ void main(void)
     
     if(rs232_get(&inbyte)!=RS_ERR_NO_DATA)  //any incoming data capture and print
     {
-      zx_border(INK_WHITE);
+      //zx_border(INK_WHITE);  //DEBUG-TIMING
       rxdata[0]=inbyte;         //Buffer the first character
       //bytes = 10;               //Maximum number of bytes to read in.
       bytes = sizeof(rxdata);
 
       //for (int i=1;i<bytes;i++)   //Loop to buffer in up to 10 characters
-      i=1;
+      bytecount=1;
       do
       {
         if (rs232_get(&inbyte) != RS_ERR_NO_DATA)  //If character add it to the buffer
         {
-          rxdata[i]=inbyte;
+          rxdata[bytecount]=inbyte;
         }
         else  //Else no character record the number of bytes we have collected
         {
-          bytes = i;
-          i = sizeof(rxdata)+1; //kill the for loop
+          bytes = bytecount;
+          bytecount = sizeof(rxdata)+1; //kill the for loop
         }
 
-      }while(++i<bytes);
+      }while(++bytecount<bytes);
       
 
-      //WRITE SCREEN
-      //zx_border(INK_GREEN);
+      //DRAW SCREEN
       
       //for (int i=0;i<bytes;i++)   //Loop to output the buffer
-      i=0;
+      bytecount=0;
       do
       {
-        zx_border(INK_BLACK);
-        inbyte = rxdata[i];
+        //zx_border(INK_BLACK); //DEBUG-TIMING
+        inbyte = rxdata[bytecount];
 
         // filter input here
 
@@ -203,13 +227,13 @@ void main(void)
         }
         else if (inbyte == 0x09) // TAB
         {
-          //fputc_cons(0x07);  // BEEP
+          //fputc_cons(0x07);  // BEEP-DEBUG
           fputc_cons(inbyte);
 
         }        
         else if (inbyte == 0x0c) // Clear screen and home cursor
         {
-          //fputc_cons(0x07);  // BEEP
+          //fputc_cons(0x07);  // BEEP-DEBUG
           fputc_cons(inbyte);
         }
         else if (inbyte==0x0d)  // Carriage Return
@@ -223,7 +247,7 @@ void main(void)
         { // DO NOTHING
           //fputc_cons(inbyte);
           //newline_attr();   
-          //fputc_cons(0x07);  // BEEP
+          //fputc_cons(0x07);  // BEEP-DEBUG
         }
         else if (lastbyte==0x0d && inbyte==0x0a)  // Carriage Return && Line Feed combo
         {
@@ -242,16 +266,18 @@ void main(void)
 
         lastbyte=inbyte;
 
-        //  quick keyboard check if we are reading alot so we can interupt
-        zx_border(INK_CYAN);
-        KeyReadMulti(0,1);
+        //QUICK keyboard check if we are reading alot so we can interupt
+        //zx_border(INK_CYAN);  //DEBUG
+        //KeyRead(0,1);
+        KeyReadMulti(0,2);
 
-      }while(++i<bytes);
+      }while(++bytecount<bytes);
     }
     else //no incoming data check keyboard
     {
-      zx_border(INK_RED);
-      KeyReadMulti(10,20);
+      //zx_border(INK_RED);  //DEBUG
+      //KeyRead(10,20);
+      KeyReadMulti(10,30);
     }
 
   }
