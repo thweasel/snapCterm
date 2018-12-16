@@ -29,6 +29,7 @@ _oemascii:
       BINARY "./src/oemasciiext3.bin.chr" ;
 #endasm
 
+/*
 void scrollfix(uint_fast8_t col)  //NOT IN USE
 {  // Ivan Blajer trick, start address is the start of the last row
 #asm
@@ -42,6 +43,7 @@ void scrollfix(uint_fast8_t col)  //NOT IN USE
     ldir
 #endasm
 }
+*/
 
 void newline_attr()  //ACTIVE
 {//Allen Albright's method
@@ -76,6 +78,7 @@ void keyboard_click(void)  //ACTIVE
 
 }
 
+/*
 void KeyRead(unsigned char time_ms, unsigned char repeat)  //NOT IN USE
 {
   //zx_border(INK_GREEN);  //DEBUG-TIMING
@@ -100,7 +103,7 @@ void KeyRead(unsigned char time_ms, unsigned char repeat)  //NOT IN USE
     //chkey = NULL;
   }while(--repeat!=0);
 }
-
+*/
 
 void KeyReadMulti(unsigned char time_ms, unsigned char repeat)  //ACTIVE
 {
@@ -134,12 +137,13 @@ void KeyReadMulti(unsigned char time_ms, unsigned char repeat)  //ACTIVE
     }
     else 
     {
-      repeat = 0;
+      zx_border(INK_RED);
+      repeat = 1;
     }    
   }while(--repeat!=0);
 
   
-zx_border(INK_WHITE);  //DEBUG-TIMING
+//zx_border(INK_WHITE);  //DEBUG-TIMING
   if(txbytes>0)
   {
     //printf("txbytes = %d",txbytes);  //DEBUG-TXBUFFER
@@ -152,7 +156,7 @@ zx_border(INK_WHITE);  //DEBUG-TIMING
     }   
     //printf("\n");  //DEBUG-TXBUFFER
   } 
-  zx_border(INK_BLACK);  //DEBUG-TIMING
+  //zx_border(INK_BLACK);  //DEBUG-TIMING
 }
 
 
