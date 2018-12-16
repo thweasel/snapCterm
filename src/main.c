@@ -43,7 +43,7 @@ void scrollfix(uint_fast8_t col)  //NOT IN USE
 #endasm
 }
 
-void newline_attr()
+void newline_attr()  //ACTIVE
 {//Allen Albright's method
     unsigned char row_attr;
     unsigned char *attr;
@@ -62,7 +62,7 @@ void newline_attr()
 
 }
 
-void keyboard_click(void)
+void keyboard_click(void)  //ACTIVE
 {//Thomas Cherryhomes key click
 
   unsigned char i,j;
@@ -102,9 +102,9 @@ void KeyRead(unsigned char time_ms, unsigned char repeat)  //NOT IN USE
 }
 
 
-void KeyReadMulti(unsigned char time_ms, unsigned char repeat)
+void KeyReadMulti(unsigned char time_ms, unsigned char repeat)  //ACTIVE
 {
-  unsigned char txdata[5];  //Way more than needed in testing i can hardly hit 2 characters
+  unsigned char txdata[20];  //Way more than needed in testing i can hardly hit 2 characters
   unsigned char txbytes = 0;
   txdata[0]=NULL;
   //zx_border(INK_RED);  //DEBUG-TIMING
@@ -118,20 +118,17 @@ void KeyReadMulti(unsigned char time_ms, unsigned char repeat)
     if (txbytes < sizeof(txdata))
     {    
       chkey = getk();
-      if (chkey != NULL)
+      if (chkey != NULL)  //Key hit translations
       {
-        keyboard_click();
-
-        if(chkey ==0x0C) // Key == Back Space (0x0C == Form feed)
-        {
-          txdata[txbytes] = 0x08;
-          ++txbytes;
-        }
-        else if (chkey != NULL)
-        {
-          txdata[txbytes] = chkey;
-          ++txbytes;
-        }
+        keyboard_click();        
+        // Some key presses need translating to other codes OR ESC[ sequences
+        if      (chkey == 0x0C) {txdata[txbytes] = 0x08;} // Key == Back Space (0x0C == Form feed)
+        else if (chkey == 0x08) {txdata[txbytes] = 0x1b; txdata[++txbytes] = 0x5b; txdata[++txbytes] = 'D'; txbytes+2;} // Cursor key LEFT
+        else if (chkey == 0x0A) {txdata[txbytes] = 0x1b; txdata[++txbytes] = 0x5b; txdata[++txbytes] = 'B'; txbytes+2;} // Cursor key DOWN
+        else if (chkey == 0x0B) {txdata[txbytes] = 0x1b; txdata[++txbytes] = 0x5b; txdata[++txbytes] = 'A'; txbytes+2;} // Cursor key UP
+        else if (chkey == 0x09) {txdata[txbytes] = 0x1b; txdata[++txbytes] = 0x5b; txdata[++txbytes] = 'C'; txbytes+2;} // Cursor key RIGHT
+        else {txdata[txbytes] = chkey;}                   // UNCHANGED
+        ++txbytes;
       }
       chkey = NULL;
     }
@@ -142,7 +139,7 @@ void KeyReadMulti(unsigned char time_ms, unsigned char repeat)
   }while(--repeat!=0);
 
   
-
+zx_border(INK_WHITE);  //DEBUG-TIMING
   if(txbytes>0)
   {
     //printf("txbytes = %d",txbytes);  //DEBUG-TXBUFFER
@@ -155,6 +152,7 @@ void KeyReadMulti(unsigned char time_ms, unsigned char repeat)
     }   
     //printf("\n");  //DEBUG-TXBUFFER
   } 
+  zx_border(INK_BLACK);  //DEBUG-TIMING
 }
 
 

@@ -1,0 +1,29 @@
+
+IF !DEFINED_ansifont
+	PUBLIC ansifont
+	EXTERN _oemascii
+	defc	DEFINED_ansifont = 1
+	defc ansifont = _oemascii
+ENDIF
+
+
+IF !DEFINED_ansifont_is_packed
+	defc	DEFINED_ansifont_is_packed = 1
+	defc ansifont_is_packed = 0
+	IFNDEF ansifont_is_packed
+	ENDIF
+ENDIF
+
+
+IF !DEFINED_ansicolumns
+	defc	DEFINED_ansicolumns = 1
+	defc ansicolumns = 80
+	IFNDEF ansicolumns
+	ENDIF
+ENDIF
+
+
+IF !NEED_ansiterminal
+	DEFINE	NEED_ansiterminal
+ENDIF
+

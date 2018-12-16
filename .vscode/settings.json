@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "input.h": "c",
+        "conio.h": "c",
+        "stdio.h": "c"
+    }
+}
