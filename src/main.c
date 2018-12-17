@@ -130,6 +130,8 @@ void KeyReadMulti(unsigned char time_ms, unsigned char repeat)  //ACTIVE
         else if (chkey == 0x0A) {txdata[txbytes] = 0x1b; txdata[++txbytes] = 0x5b; txdata[++txbytes] = 'B'; txbytes+2;} // Cursor key DOWN
         else if (chkey == 0x0B) {txdata[txbytes] = 0x1b; txdata[++txbytes] = 0x5b; txdata[++txbytes] = 'A'; txbytes+2;} // Cursor key UP
         else if (chkey == 0x09) {txdata[txbytes] = 0x1b; txdata[++txbytes] = 0x5b; txdata[++txbytes] = 'C'; txbytes+2;} // Cursor key RIGHT
+        else if (chkey == 0x04) {txdata[txbytes] = 0x1b; txdata[++txbytes] = 0x5b; txdata[++txbytes] = '5'; txdata[++txbytes] = '~'; txbytes+3;} // Page UP
+        else if (chkey == 0x05) {txdata[txbytes] = 0x1b; txdata[++txbytes] = 0x5b; txdata[++txbytes] = '6'; txdata[++txbytes] = '~'; txbytes+3;} // Page DOWN
         else {txdata[txbytes] = chkey;}                   // UNCHANGED
         ++txbytes;
       }
