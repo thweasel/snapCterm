@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <spectrum.h>
 #include <rs232.h>
-#include <input.h>
+#include <input.h>  //#include <input/input_zx.h>
 #include <string.h>
 #include <sound.h>  // sound for keyboard click
 
@@ -161,7 +161,42 @@ void KeyReadMulti(unsigned char time_ms, unsigned char repeat)  //ACTIVE
   //zx_border(INK_BLACK);  //DEBUG-TIMING
 }
 
+void title(void)
+{ 
+  char titlescroll = 24;
+  printf("\033[32;40m");
+  printf("[\373].80 columns  [\373].ASCII oem set  [\373].ANSI  [\373].colour clash   \n\n");
+  printf("Terminal ready... ");
+  printf("\033[37;40m");
+  printf("\n");
+  printf("                                     _____  _                          \r");
+  printf("                                    /  __ \\| |                         \r");
+  printf("           ___  _ __    __ _  _ __  | /  \\/| |_  ___  _ __  _ __ ___   \r\033[1m");
+  printf("          / __|| '_ \\  / _` || '_ \\ | |    | __|/ _ \\| '__|| '_ ` _ \\  \r");
+  printf("          \\__ \\| | | || (_| || |_) || \\__/\\| |_|  __/| |   | | | | | | \r");
+  printf("          |___/|_| |_| \\__,_|| .__/  \\____/ \\__|\\___||_|   |_| |_| |_| \r\033[0m");
+  printf("                             | |                                       \r");
+  printf("                             |_|                                       \r");
+  printf("\n");
+  printf("\033[1m\033[31;40m");
+  printf("                         !  -  PRE - ALPHA - VERSION - !       \n\n\n");
+  printf("\033[1m\033[33;40m");
+  printf("    BY: Owen Reynolds 2018  --  \\/\\/olvo-\\/\\/are                \n\n");
+  printf("CREDIT: Thomas Cherryhomes @ IRATA.ONLINE       \n\n");
+  printf("\033[1m\033[37;40m");
+  printf("                        Built using Z88DK - C compiler for Z80s         \n\n");
+  printf("\033[1m\033[34;40m");
+  printf("               - Join us on Facebook - Z88DK ZX Spectrum user group -   \n\n\033[1m\033[37;40m");
+  printf("                        -\\/\\/\\- ANY KEY TO CONTINUE -/\\/\\/- \033[37;40m");
 
+  in_WaitForKey();
+  do
+  {
+    printf("\r");  
+    newline_attr();
+  }while(--titlescroll!=0);
+
+}
 
 void main(void)
 {
@@ -183,7 +218,9 @@ void main(void)
   
 
   // main loop
-  printf("Terminal ready...");
+ 
+  title();
+  
   while(1)
   {
     //RXDATA
