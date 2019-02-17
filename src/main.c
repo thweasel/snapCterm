@@ -13,6 +13,7 @@
 //GLOBALS
 unsigned char inbyte, chkey, lastbyte;
 char rxdata[18];
+uint_fast8_t ExtendKeyFlag;
 
 //static int bytes,i;
 static unsigned char bytes,bytecount;
@@ -121,21 +122,53 @@ void KeyReadMulti(unsigned char time_ms, unsigned char repeat)  //ACTIVE
     if (txbytes < sizeof(txdata))
     {    
       chkey = getk();
-      if (chkey != NULL)  //Key hit translations
+
+      if (ExtendKeyFlag == 0)  // Not extended mode
       {
-        keyboard_click();        
-        // Some key presses need translating to other codes OR ESC[ sequences
-        if      (chkey == 0x0C) {txdata[txbytes] = 0x08;} // Key == Back Space (0x0C == Form feed)
-        else if (chkey == 0x08) {txdata[txbytes] = 0x1b; txdata[++txbytes] = 0x5b; txdata[++txbytes] = 'D'; txbytes+2;} // Cursor key LEFT
-        else if (chkey == 0x0A) {txdata[txbytes] = 0x1b; txdata[++txbytes] = 0x5b; txdata[++txbytes] = 'B'; txbytes+2;} // Cursor key DOWN
-        else if (chkey == 0x0B) {txdata[txbytes] = 0x1b; txdata[++txbytes] = 0x5b; txdata[++txbytes] = 'A'; txbytes+2;} // Cursor key UP
-        else if (chkey == 0x09) {txdata[txbytes] = 0x1b; txdata[++txbytes] = 0x5b; txdata[++txbytes] = 'C'; txbytes+2;} // Cursor key RIGHT
-        else if (chkey == 0x04) {txdata[txbytes] = 0x1b; txdata[++txbytes] = 0x5b; txdata[++txbytes] = '5'; txdata[++txbytes] = '~'; txbytes+3;} // Page UP
-        else if (chkey == 0x05) {txdata[txbytes] = 0x1b; txdata[++txbytes] = 0x5b; txdata[++txbytes] = '6'; txdata[++txbytes] = '~'; txbytes+3;} // Page DOWN
-        else {txdata[txbytes] = chkey;}                   // UNCHANGED
-        ++txbytes;
+        zx_border(INK_BLACK); 
+        if (chkey != NULL)  //Key hit translations
+        {
+          keyboard_click();        
+          // Some key presses need translating to other codes OR ESC[ sequences
+          if      (chkey == 0x0C) {txdata[txbytes] = 0x08;} // Key == Back Space (0x0C == Form feed)
+          else if (chkey == 0x08) {txdata[txbytes] = 0x1b; txdata[++txbytes] = 0x5b; txdata[++txbytes] = 'D'; txbytes+2;} // Cursor key LEFT
+          else if (chkey == 0x0A) {txdata[txbytes] = 0x1b; txdata[++txbytes] = 0x5b; txdata[++txbytes] = 'B'; txbytes+2;} // Cursor key DOWN
+          else if (chkey == 0x0B) {txdata[txbytes] = 0x1b; txdata[++txbytes] = 0x5b; txdata[++txbytes] = 'A'; txbytes+2;} // Cursor key UP
+          else if (chkey == 0x09) {txdata[txbytes] = 0x1b; txdata[++txbytes] = 0x5b; txdata[++txbytes] = 'C'; txbytes+2;} // Cursor key RIGHT
+          else if (chkey == 0x04) {txdata[txbytes] = 0x1b; txdata[++txbytes] = 0x5b; txdata[++txbytes] = '5'; txdata[++txbytes] = '~'; txbytes+3;} // Page UP
+          else if (chkey == 0x05) {txdata[txbytes] = 0x1b; txdata[++txbytes] = 0x5b; txdata[++txbytes] = '6'; txdata[++txbytes] = '~'; txbytes+3;} // Page DOWN
+          else if (chkey == 0x0E) {ExtendKeyFlag++; txbytes-1;}  // Symbol shift condition
+          else                    {txdata[txbytes] = chkey;}                   // UNCHANGED
+          ++txbytes;
+        }
+        chkey = NULL;
       }
-      chkey = NULL;
+      else if (ExtendKeyFlag == 1)  // Level 1 extended mode - PC Keys
+      {
+        zx_border(INK_GREEN); 
+        printf("ExtendKeyFlag = %d \n",ExtendKeyFlag);
+
+        if        (chkey == 0x0E) {ExtendKeyFlag++;}  // Next extended mode      
+        else if   (chkey == 'e')  {zx_border(INK_MAGENTA); txdata[txbytes] = 0x1b; txbytes++; ExtendKeyFlag = 0;}  //  Escape key
+        else if   (chkey == 'c')  {zx_border(INK_MAGENTA); txdata[txbytes] = 0x1b; txbytes++; ExtendKeyFlag = 0;}// CTRL key
+        //ALT 
+        //F1 - F10 (F11 F12) ?
+        //TAB
+      }
+      else if (ExtendKeyFlag == 2)  // Level 2 extended mode - Control + Key combo
+      {
+        zx_border(INK_CYAN); 
+        printf("ExtendKeyFlag = %d \n",ExtendKeyFlag);
+
+        if        (chkey == 0x0E) {ExtendKeyFlag++;}  // Next extended mode
+        
+
+      }
+      else  // RESET
+      {
+        zx_border(INK_WHITE);
+        ExtendKeyFlag = 0;
+      }
     }
     else 
     {
@@ -202,6 +235,7 @@ void main(void)
 {
   
   lastbyte=0;
+  ExtendKeyFlag=0;
 
   // quick initalise serial port
   rs232_params(RS_BAUD_9600|RS_STOP_1|RS_BITS_8,RS_PAR_NONE);
@@ -209,7 +243,8 @@ void main(void)
 
   // Clean up the screen
   zx_border(INK_BLACK);
-  clg();
+  //clg();
+  clrscr();
   zx_colour(PAPER_BLACK|INK_WHITE);
   
   //ANSI ESCAPE codes TO SET UP
