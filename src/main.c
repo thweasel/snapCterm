@@ -11,9 +11,10 @@
 #include <sound.h>  // sound for keyboard click
 
 //GLOBALS
-unsigned char inbyte, chkey, lastbyte;
-char rxdata[18];
-uint_fast8_t ExtendKeyFlag;
+static unsigned char inbyte, chkey, lastbyte;
+static char rxdata[18];
+static uint_fast8_t ExtendKeyFlag;
+static int cursorX, cursorY;
 
 //static int bytes,i;
 static unsigned char bytes,bytecount;
@@ -77,6 +78,14 @@ void keyboard_click(void)  //ACTIVE
 	}
     }
 
+}
+
+void DrawCursor(void)
+{
+  cursorX = wherex();
+  cursorY = wherey();
+  putch(0x219);
+  gotoxy(cursorX,cursorY);
 }
 
 /*
@@ -154,6 +163,12 @@ void KeyReadMulti(unsigned char time_ms, unsigned char repeat)  //ACTIVE
         //ALT 
         //F1 - F10 (F11 F12) ?
         //TAB
+        //Page Up
+        //Page Down
+        //Home
+        //End
+        //Insert
+        
       }
       else if (ExtendKeyFlag == 2)  // Level 2 extended mode - Control + Key combo
       {
@@ -339,6 +354,8 @@ void main(void)
             newline_attr();
           }
         }
+
+        DrawCursor();  //  Last job is to place the cursor.  Will need to catch relocations and remove cursor!
 
         lastbyte=inbyte;
 
