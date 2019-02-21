@@ -1,6 +1,6 @@
 // Compiler line (not using make)
 // zcc +zx -clib=ansi -pragma-define:ansicolumns=80 -lndos -lm -lrs232plus -create-app -subtype=wav main.c
-//zcc +zx  -clib=ansi -pragma-redirect:ansifont=_oemascii -pragma-define:ansifont_is_packed=0 -pragma-define:ansicolumns=80 -lndos -lm -lrs232plus -create-app -subtype=wav
+// zcc +zx -clib=ansi -pragma-redirect:ansifont=_oemascii -pragma-define:ansifont_is_packed=0 -pragma-define:ansicolumns=80 -lndos -lm -lrs232plus -create-app -subtype=wav
 
 #include <conio.h>
 #include <stdio.h>
@@ -13,7 +13,7 @@
 //GLOBALS
 static unsigned char inbyte, chkey, lastbyte;
 static char rxdata[18];
-static uint_fast8_t ExtendKeyFlag;
+static uint_fast8_t ExtendKeyFlag, CursorFlag;
 static int cursorX, cursorY;
 
 //static int bytes,i;
@@ -49,7 +49,7 @@ void scrollfix(uint_fast8_t col)  //NOT IN USE
 
 void newline_attr()  //ACTIVE
 {//Allen Albright's method
-    unsigned char row_attr;
+    unsigned char row_attr;  //static and global these?  Probably change it to a 8 bit int...
     unsigned char *attr;
 
     row_attr = 23;
@@ -69,23 +69,34 @@ void newline_attr()  //ACTIVE
 void keyboard_click(void)  //ACTIVE
 {//Thomas Cherryhomes key click
 
+  // I should probably change the loop counter in here to something static and global this is called alot
   unsigned char i,j;
   for (i=0;i<=10;i++)
-    {
+  {
       bit_click();
       for (j=0;j<4;j++)
 	{
-	}
-    }
-
+	
 }
 
 void DrawCursor(void)
 {
   cursorX = wherex();
   cursorY = wherey();
-  putch(0x219);
-  gotoxy(cursorX,cursorY);
+  if (cursorX <79)
+  {
+    fputc_cons(219);
+    gotoxy(cursorX,cursorY);
+  }
+}
+
+void ClearCursor(void)
+{
+  if (cursorX <79)
+  {
+    fputc_cons(32); //space
+    fputc_cons(8);  //backspace!
+  }
 }
 
 /*
@@ -94,6 +105,7 @@ void KeyRead(unsigned char time_ms, unsigned char repeat)  //NOT IN USE
   //zx_border(INK_GREEN);  //DEBUG-TIMING
   do
   {
+    chkey = NULL;
     if(time_ms>0)
     {
       in_Pause(time_ms);
@@ -105,12 +117,17 @@ void KeyRead(unsigned char time_ms, unsigned char repeat)  //NOT IN USE
       keyboard_click();
       rs232_put(0x08);
     }
+    else if (chkey == 0x0A)  //Enter key remapping
+    {
+      keyboard_click();
+      rs232_put(0x0D);  //enter
+    }
     else if (chkey != NULL)
     {
       keyboard_click();
       rs232_put(chkey);
     }
-    //chkey = NULL;
+    chkey = NULL;
   }while(--repeat!=0);
 }
 */
@@ -132,20 +149,29 @@ void KeyReadMulti(unsigned char time_ms, unsigned char repeat)  //ACTIVE
     {    
       chkey = getk();
 
-      if (ExtendKeyFlag == 0)  // Not extended mode
+     if (ExtendKeyFlag == 0)  // Not extended mode
       {
         zx_border(INK_BLACK); 
+
+
         if (chkey != NULL)  //Key hit translations
         {
           keyboard_click();        
           // Some key presses need translating to other codes OR ESC[ sequences
-          if      (chkey == 0x0C) {txdata[txbytes] = 0x08;} // Key == Back Space (0x0C == Form feed)
-          else if (chkey == 0x08) {txdata[txbytes] = 0x1b; txdata[++txbytes] = 0x5b; txdata[++txbytes] = 'D'; txbytes+2;} // Cursor key LEFT
-          else if (chkey == 0x0A) {txdata[txbytes] = 0x1b; txdata[++txbytes] = 0x5b; txdata[++txbytes] = 'B'; txbytes+2;} // Cursor key DOWN
-          else if (chkey == 0x0B) {txdata[txbytes] = 0x1b; txdata[++txbytes] = 0x5b; txdata[++txbytes] = 'A'; txbytes+2;} // Cursor key UP
-          else if (chkey == 0x09) {txdata[txbytes] = 0x1b; txdata[++txbytes] = 0x5b; txdata[++txbytes] = 'C'; txbytes+2;} // Cursor key RIGHT
+          if      (chkey == 0x0C) {txdata[txbytes] = 0x08;} // Key Back Space (0x0C Form feed > Back space)
+          else if (chkey == 0x0A) {txdata[txbytes] = 0x0D;} // Key ENTER (0x0A NL line feed, new line > 0x13 Carriage Return)
+
+
+/*
+        THIS ALL NEEDS A RE-THINK!  move to extended mode 1?
+
+          else if (chkey == 0x19) {txdata[txbytes] = 0x1b; txdata[++txbytes] = 0x5b; txdata[++txbytes] = 'D'; txbytes+2;} // Cursor key LEFT      
+          else if (chkey == 0x1A) {txdata[txbytes] = 0x1b; txdata[++txbytes] = 0x5b; txdata[++txbytes] = 'B'; txbytes+2;} // Cursor key DOWN
+          else if (chkey == 0x1B) {txdata[txbytes] = 0x1b; txdata[++txbytes] = 0x5b; txdata[++txbytes] = 'A'; txbytes+2;} // Cursor key UP
+          else if (chkey == 0x1C) {txdata[txbytes] = 0x1b; txdata[++txbytes] = 0x5b; txdata[++txbytes] = 'C'; txbytes+2;} // Cursor key RIGHT
           else if (chkey == 0x04) {txdata[txbytes] = 0x1b; txdata[++txbytes] = 0x5b; txdata[++txbytes] = '5'; txdata[++txbytes] = '~'; txbytes+3;} // Page UP
           else if (chkey == 0x05) {txdata[txbytes] = 0x1b; txdata[++txbytes] = 0x5b; txdata[++txbytes] = '6'; txdata[++txbytes] = '~'; txbytes+3;} // Page DOWN
+*/          
           else if (chkey == 0x0E) {ExtendKeyFlag++; txbytes-1;}  // Symbol shift condition
           else                    {txdata[txbytes] = chkey;}                   // UNCHANGED
           ++txbytes;
@@ -229,7 +255,7 @@ void title(void)
   printf("\033[1m\033[31;40m");
   printf("                         !  -  PRE - ALPHA - VERSION - !       \n\n\n");
   printf("\033[1m\033[33;40m");
-  printf("    BY: Owen Reynolds 2018  --  \\/\\/olvo-\\/\\/are                \n\n");
+  printf("    BY: Owen Reynolds 2018                      \n\n");
   printf("CREDIT: Thomas Cherryhomes @ IRATA.ONLINE       \n\n");
   printf("\033[1m\033[37;40m");
   printf("                        Built using Z88DK - C compiler for Z80s         \n\n");
@@ -248,9 +274,10 @@ void title(void)
 
 void main(void)
 {
-  
+  //Init globals clean
   lastbyte=0;
   ExtendKeyFlag=0;
+  CursorFlag=0;
 
   // quick initalise serial port
   rs232_params(RS_BAUD_9600|RS_STOP_1|RS_BITS_8,RS_PAR_NONE);
@@ -258,7 +285,6 @@ void main(void)
 
   // Clean up the screen
   zx_border(INK_BLACK);
-  //clg();
   clrscr();
   zx_colour(PAPER_BLACK|INK_WHITE);
   
@@ -301,68 +327,107 @@ void main(void)
 
       //DRAW SCREEN
       
-      //for (int i=0;i<bytes;i++)   //Loop to output the buffer
       bytecount=0;
       do
       {
+
+//   Need to catch the Cursor move codes and other ESC keys, these will clear and move the cursor differently.
+//   look for 1b (ESC) 5b ([) then some #####  6d (m) (m is the end)  --  Acutally more than one type of ending...
+  
+
         //zx_border(INK_BLACK); //DEBUG-TIMING
         inbyte = rxdata[bytecount];
-
-        // filter input here
-
-        if (lastbyte==0xff && inbyte==0xff)  //catch Telnet IAC drop it
-        //if(inbyte==0xff)
+        
+        //Catch the start of ESC [
+        if (inbyte == 0x1b)
         {
-          //fputc_cons(inbyte);
-          inbyte=0;  //reset inbyte
+          ClearCursor();   // hide cursor
+          CursorFlag = 1;  // no cursor moves
         }
-        else if (inbyte == 0x09) // TAB
-        {
-          //fputc_cons(0x07);  // BEEP-DEBUG
-          fputc_cons(inbyte);
 
-        }        
-        else if (inbyte == 0x0c) // Clear screen and home cursor
+        if(lastbyte == 0x1b && inbyte != 0x5b)
         {
-          //fputc_cons(0x07);  // BEEP-DEBUG
+          CursorFlag = 0;  // just an escape fine
+        }
+
+
+        //if(CursorFlag == 0  || (lastbyte == 0x1b && inbyte !=0x5b))  // No ESC characters draw as normal
+        
+        if(inbyte == 0x6d && CursorFlag == 1)  // Close ESC code  --  There are more ends than just 0x6D will need to look at this more
+        {
+          fputc_cons(inbyte);
+          DrawCursor();
+          CursorFlag = 0;
+        }
+        else if (CursorFlag == 1)
+        {
           fputc_cons(inbyte);
         }
-        else if (inbyte==0x0d)  // Carriage Return
-        {  // could be left out as 0x0d triggers a new line if printed to screen
+        else if(CursorFlag == 0)
+        {
           
-          fputc_cons(inbyte);
-          newline_attr();
+          ClearCursor();  //You cant do this, as it breaks the ESC codes
+          // filter input here
 
-        }
-        else if (inbyte==0x0a)  // Line Feed
-        { // DO NOTHING
-          //fputc_cons(inbyte);
-          //newline_attr();   
-          //fputc_cons(0x07);  // BEEP-DEBUG
-        }
-        else if (lastbyte==0x0d && inbyte==0x0a)  // Carriage Return && Line Feed combo
-        {
-          fputc_cons(inbyte);
-          newline_attr();          
-          //inbyte=0;  //reset inbyte
-        }
-        else  // default output the character to the screen 
-        {
-          fputc_cons(inbyte);
-          if (7 != zx_attr(23,31))  // FIX SCROLL ISSUE
+          if (lastbyte==0xff && inbyte==0xff)  //catch Telnet IAC drop it
+          //if(inbyte==0xff)
           {
-            newline_attr();
+            //fputc_cons(inbyte);
+            inbyte=0;  //reset inbyte
           }
+          else if (inbyte == 0x09) // TAB
+          {
+            //fputc_cons(0x07);  // BEEP-DEBUG
+            fputc_cons(inbyte);
+
+          }        
+          else if (inbyte == 0x0c) // Clear screen and home cursor
+          {
+            //fputc_cons(0x07);  // BEEP-DEBUG
+            fputc_cons(inbyte);
+          }
+          else if (inbyte==0x0d)  // Carriage Return
+          {  // could be left out as 0x0d triggers a new line if printed to screen
+            fputc_cons(inbyte);
+            newline_attr();
+
+          }
+          else if (inbyte==0x0a)  // Line Feed
+          { // DO NOTHING
+            //fputc_cons(inbyte);
+            //newline_attr();   
+            //fputc_cons(0x07);  // BEEP-DEBUG
+          }
+          else if (lastbyte==0x0d && inbyte==0x0a)  // Carriage Return && Line Feed combo
+          {
+            fputc_cons(inbyte);
+            newline_attr();          
+            //inbyte=0;  //reset inbyte
+          }
+          else  // default output the character to the screen 
+          {
+            fputc_cons(inbyte);
+            if (7 != zx_attr(23,31))  // FIX SCROLL ISSUE
+            {
+              newline_attr();
+            }
+          }
+          DrawCursor();
+        }
+        else
+        {
+          printf("!!! PANIC !!!");
+          return;
         }
 
-        DrawCursor();  //  Last job is to place the cursor.  Will need to catch relocations and remove cursor!
+        //if (CursorFlag == 3){CursorFlag=0;}  //Reset the Cursor flag        //First attemp reset condition
 
         lastbyte=inbyte;
 
         //QUICK keyboard check if we are reading alot so we can interupt
         //zx_border(INK_CYAN);  //DEBUG
         //KeyRead(0,1);
-        KeyReadMulti(0,2);
+        KeyReadMulti(0,2);  //broken
 
       }while(++bytecount<bytes);
     }
@@ -370,7 +435,7 @@ void main(void)
     {
       //zx_border(INK_RED);  //DEBUG
       //KeyRead(10,20);
-      KeyReadMulti(10,30);
+      KeyReadMulti(10,30);  //broken  -- conflict on 0x0A
     }
 
   }
