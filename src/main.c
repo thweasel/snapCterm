@@ -9,11 +9,13 @@
 #include <input.h>  //#include <input/input_zx.h>
 #include <string.h>
 #include <sound.h>  // sound for keyboard click
+#include <stdlib.h>
 
 //GLOBALS
 static unsigned char inbyte, chkey, lastbyte;
-static char rxdata[18];
-static uint_fast8_t ExtendKeyFlag, CursorFlag;
+static unsigned char *CursorAddr;
+static char rxdata[20];  //18?
+static uint_fast8_t ExtendKeyFlag, CursorFlag, CursorMask;
 static int cursorX, cursorY;
 
 //static int bytes,i;
@@ -74,15 +76,13 @@ void keyboard_click(void)  //ACTIVE
   for (i=0;i<=10;i++)
   {
       bit_click();
-      for (j=0;j<4;j++) 
-      {
-        //nothing
-      }
+      for (j=0;j<4;j++) { }
   }
 	
 }
 
-void DrawCursor(void)
+/*
+void DrawCursor(void)  // Version 1
 {
   cursorX = wherex();
   cursorY = wherey();
@@ -92,8 +92,62 @@ void DrawCursor(void)
     gotoxy(cursorX,cursorY);
   }
 }
+*/
 
-void ClearCursor(void)
+void DrawCursor(void)  // Version 2
+{
+  
+  cursorX = wherex();
+  cursorY = wherey();
+
+  if (cursorX <79)
+  {
+	  CursorMask = cursorX%8;  
+	  switch (CursorMask)
+	  {
+		  case 0 :
+		  CursorAddr = zx_pxy2saddr(cursorX*3, cursorY*8+7,0xff);
+		  *CursorAddr= *CursorAddr ^ (224);	  
+		  break;
+		  case 1 :
+		  CursorAddr=zx_pxy2saddr(cursorX*3, cursorY*8+7,0xff);
+		  *CursorAddr= *CursorAddr ^ (28);
+		  break;
+		  case 2 :  //SPLIT over 2 bytes
+		  CursorAddr=zx_pxy2saddr(cursorX*3, cursorY*8+7,0xff);
+		  *CursorAddr= *CursorAddr ^ (3);
+		  CursorAddr=zx_pxy2saddr(cursorX*3+3, cursorY*8+7,0xff);
+		  *CursorAddr= *CursorAddr ^ (128);
+		  break;
+		  case 3 :
+		  CursorAddr=zx_pxy2saddr(cursorX*3, cursorY*8+7,0xff);
+		  *CursorAddr= *CursorAddr ^ (112);
+		  break;
+		  case 4 :
+		  CursorAddr=zx_pxy2saddr(cursorX*3, cursorY*8+7,0xff);
+		  *CursorAddr= *CursorAddr ^ (14);
+		  break;
+		  case 5 :  //SPLIT over 2 bytes
+		  CursorAddr=zx_pxy2saddr(cursorX*3, cursorY*8+7,0xff);
+		  *CursorAddr= *CursorAddr ^ (1);
+		  CursorAddr=zx_pxy2saddr(cursorX*3+3, cursorY*8+7,0xff);
+		  *CursorAddr= *CursorAddr ^ (192);
+		  break;
+		  case 6 :
+		  CursorAddr=zx_pxy2saddr(cursorX*3, cursorY*8+7,0xff);
+		  *CursorAddr= *CursorAddr ^ (56);
+		  break;
+		  case 7 :
+		  CursorAddr=zx_pxy2saddr(cursorX*3, cursorY*8+7,0xff);
+		  *CursorAddr= *CursorAddr ^ (7);
+		  break;		  
+		  }
+  }
+}
+
+
+/*
+void ClearCursor(void)  // Version 1
 {
   if (cursorX <79)
   {
@@ -101,6 +155,19 @@ void ClearCursor(void)
     fputc_cons(8);  //backspace!
   }
 }
+*/
+
+void ClearCursor(void)  // Version 2
+{
+  cursorX = wherex();
+  cursorY = wherey();
+  if (cursorX <79)
+  {
+    cprintf("\033[27m%c",cvpeek(cursorX,cursorY)); // ESC [ inverseOFF "char"
+    gotoxy(cursorX,cursorY);
+  }
+}
+
 
 /*
 void KeyRead(unsigned char time_ms, unsigned char repeat)  //NOT IN USE
@@ -141,6 +208,7 @@ void KeyReadMulti(unsigned char time_ms, unsigned char repeat)  //ACTIVE
   unsigned char txbytes = 0;
   txdata[0]=NULL;
   //zx_border(INK_RED);  //DEBUG-TIMING
+ 
   do
   {
     if(time_ms>0)
@@ -165,13 +233,14 @@ void KeyReadMulti(unsigned char time_ms, unsigned char repeat)  //ACTIVE
           else if (chkey == 0x0A) {txdata[txbytes] = 0x0D;} // Key ENTER (0x0A NL line feed, new line > 0x13 Carriage Return)
 
 
-/*
-        THIS ALL NEEDS A RE-THINK!  move to extended mode 1?
 
-          else if (chkey == 0x19) {txdata[txbytes] = 0x1b; txdata[++txbytes] = 0x5b; txdata[++txbytes] = 'D'; txbytes+2;} // Cursor key LEFT      
-          else if (chkey == 0x1A) {txdata[txbytes] = 0x1b; txdata[++txbytes] = 0x5b; txdata[++txbytes] = 'B'; txbytes+2;} // Cursor key DOWN
-          else if (chkey == 0x1B) {txdata[txbytes] = 0x1b; txdata[++txbytes] = 0x5b; txdata[++txbytes] = 'A'; txbytes+2;} // Cursor key UP
-          else if (chkey == 0x1C) {txdata[txbytes] = 0x1b; txdata[++txbytes] = 0x5b; txdata[++txbytes] = 'C'; txbytes+2;} // Cursor key RIGHT
+        //THIS ALL NEEDS A RE-THINK!  move to extended mode 1?
+
+          else if (chkey == 0x08) {txdata[txbytes] = 0x1b; txdata[++txbytes] = 0x5b; txdata[++txbytes] = 'D'; txbytes+2;} // Cursor key LEFT      
+          else if (chkey == 0x0a) {txdata[txbytes] = 0x1b; txdata[++txbytes] = 0x5b; txdata[++txbytes] = 'B'; txbytes+2;} // Cursor key DOWN
+          else if (chkey == 0x0b) {txdata[txbytes] = 0x1b; txdata[++txbytes] = 0x5b; txdata[++txbytes] = 'A'; txbytes+2;} // Cursor key UP
+          else if (chkey == 0x09) {txdata[txbytes] = 0x1b; txdata[++txbytes] = 0x5b; txdata[++txbytes] = 'C'; txbytes+2;} // Cursor key RIGHT
+/*          
           else if (chkey == 0x04) {txdata[txbytes] = 0x1b; txdata[++txbytes] = 0x5b; txdata[++txbytes] = '5'; txdata[++txbytes] = '~'; txbytes+3;} // Page UP
           else if (chkey == 0x05) {txdata[txbytes] = 0x1b; txdata[++txbytes] = 0x5b; txdata[++txbytes] = '6'; txdata[++txbytes] = '~'; txbytes+3;} // Page DOWN
 */          
@@ -298,10 +367,11 @@ void main(void)
 
   // main loop
  
-  title();
+  //title();
   
   while(1)
   {
+    if(CursorFlag!=1) {DrawCursor();}
     //RXDATA
     
     if(rs232_get(&inbyte)!=RS_ERR_NO_DATA)  //any incoming data capture and print
@@ -365,7 +435,7 @@ Report Cursor Position	<ESC>[{ROW};{COLUMN}R   Generated by the device in respon
         //Catch the start of ESC [  --  Need to stop Cursor movement to preserve the ESC [ sequence (drawing and deleting puts to the console)
         if (inbyte == 0x1b)
         {
-          ClearCursor();   // hide cursor
+          //ClearCursor();   // hide cursor
           CursorFlag = 1;  // no cursor moves
         }
 
@@ -378,8 +448,41 @@ Report Cursor Position	<ESC>[{ROW};{COLUMN}R   Generated by the device in respon
         //  Putting to console
         if(inbyte >= 0x40 && inbyte <= 0x7f && inbyte != 0x5b && CursorFlag == 1)  // Catch the end of ESC [  --  Turn Cursor move ON -- Filtering [ (0x5b)
         {
+          if(inbyte == 0x6e && lastbyte == 0x36)  // ESC [ ROW ; COLUMN R  Row and column need to be as TEXT
+          {
+            char s[2];        
+
+            cursorY = wherey();
+            cursorX = wherex();
+
+            rs232_put(0x1b);      // ESC
+            rs232_put(0x5b);      // [
+            
+            if(cursorY/10!=0)
+            {
+              itoa(cursorY/10,s,10);
+              rs232_put(s[0]);
+            }
+            itoa(cursorY%10,s,10);
+            rs232_put(s[0]);
+
+            rs232_put(0x3b);      // ;
+            
+            
+            if(cursorX/10!=0)
+            {
+              itoa(cursorX/10,s,10);
+              rs232_put(s[0]);
+            }
+            itoa(cursorX%10,s,10);
+            rs232_put(s[0]);
+
+            //rs232_put(0x52);      // R
+            rs232_put('R');
+          }
+
           fputc_cons(inbyte);
-          DrawCursor();
+          //DrawCursor();
           CursorFlag = 0;
         }
         else if (CursorFlag == 1)  //  During ESC [  --  Cursor move OFF
@@ -389,7 +492,7 @@ Report Cursor Position	<ESC>[{ROW};{COLUMN}R   Generated by the device in respon
         else if(CursorFlag == 0)  //  No ESC [  --  Cursor move ON
         {
           
-          ClearCursor();  //You cant do this, as it breaks the ESC codes
+          //ClearCursor();  //You cant do this, as it breaks the ESC codes
           // filter input here
 
           if (lastbyte==0xff && inbyte==0xff)  //catch Telnet IAC drop it
@@ -398,9 +501,15 @@ Report Cursor Position	<ESC>[{ROW};{COLUMN}R   Generated by the device in respon
             //fputc_cons(inbyte);
             inbyte=0;  //reset inbyte
           }
+          else if(inbyte == 0x08)  //Backspace
+          {
+            //ClearCursor();
+            fputc_cons(inbyte);
+          }
           else if (inbyte == 0x09) // TAB
           {
             //fputc_cons(0x07);  // BEEP-DEBUG
+
             fputc_cons(inbyte);
 
           }        
@@ -411,6 +520,7 @@ Report Cursor Position	<ESC>[{ROW};{COLUMN}R   Generated by the device in respon
           }
           else if (inbyte==0x0d)  // Carriage Return
           {  // could be left out as 0x0d triggers a new line if printed to screen
+            //ClearCursor();
             fputc_cons(inbyte);
             newline_attr();
 
@@ -435,7 +545,7 @@ Report Cursor Position	<ESC>[{ROW};{COLUMN}R   Generated by the device in respon
               newline_attr();
             }
           }
-          DrawCursor();
+          //DrawCursor();
         }
         else
         {
@@ -450,7 +560,7 @@ Report Cursor Position	<ESC>[{ROW};{COLUMN}R   Generated by the device in respon
         //QUICK keyboard check if we are reading alot so we can interupt
         //zx_border(INK_CYAN);  //DEBUG
         //KeyRead(0,1);
-        KeyReadMulti(0,2);  //broken
+        KeyReadMulti(0,2);
 
       }while(++bytecount<bytes);
     }
@@ -458,7 +568,9 @@ Report Cursor Position	<ESC>[{ROW};{COLUMN}R   Generated by the device in respon
     {
       //zx_border(INK_RED);  //DEBUG
       //KeyRead(10,20);
-      KeyReadMulti(10,30);  //broken  -- conflict on 0x0A
+      
+      
+      KeyReadMulti(10,30);
     }
 
   }
