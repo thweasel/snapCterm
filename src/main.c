@@ -81,39 +81,39 @@ void DrawCursor(void)  // Version 2
 	  switch (CursorMask)
 	  {
 		  case 0 :
-		  CursorAddr = zx_pxy2saddr(cursorX*3, cursorY*8+7,0xff);
-		  *CursorAddr= *CursorAddr ^ (224);	  
+		  CursorAddr = zx_pxy2saddr(cursorX*3, cursorY*8+7,255);
+		  *CursorAddr= *CursorAddr ^ (224);	   
 		  break;
 		  case 1 :
-		  CursorAddr=zx_pxy2saddr(cursorX*3, cursorY*8+7,0xff);
+		  CursorAddr=zx_pxy2saddr(cursorX*3, cursorY*8+7,255);
 		  *CursorAddr= *CursorAddr ^ (28);
 		  break;
 		  case 2 :  //SPLIT over 2 bytes
-		  CursorAddr=zx_pxy2saddr(cursorX*3, cursorY*8+7,0xff);
+		  CursorAddr=zx_pxy2saddr(cursorX*3, cursorY*8+7,255);
 		  *CursorAddr= *CursorAddr ^ (3);
-		  CursorAddr=zx_pxy2saddr(cursorX*3+3, cursorY*8+7,0xff);
+		  CursorAddr=zx_pxy2saddr(cursorX*3+3, cursorY*8+7,255);
 		  *CursorAddr= *CursorAddr ^ (128);
 		  break;
 		  case 3 :
-		  CursorAddr=zx_pxy2saddr(cursorX*3, cursorY*8+7,0xff);
+		  CursorAddr=zx_pxy2saddr(cursorX*3, cursorY*8+7,255);
 		  *CursorAddr= *CursorAddr ^ (112);
 		  break;
 		  case 4 :
-		  CursorAddr=zx_pxy2saddr(cursorX*3, cursorY*8+7,0xff);
+		  CursorAddr=zx_pxy2saddr(cursorX*3, cursorY*8+7,255);
 		  *CursorAddr= *CursorAddr ^ (14);
 		  break;
 		  case 5 :  //SPLIT over 2 bytes
-		  CursorAddr=zx_pxy2saddr(cursorX*3, cursorY*8+7,0xff);
+		  CursorAddr=zx_pxy2saddr(cursorX*3, cursorY*8+7,255);
 		  *CursorAddr= *CursorAddr ^ (1);
-		  CursorAddr=zx_pxy2saddr(cursorX*3+3, cursorY*8+7,0xff);
+		  CursorAddr=zx_pxy2saddr(cursorX*3+3, cursorY*8+7,255);
 		  *CursorAddr= *CursorAddr ^ (192);
 		  break;
 		  case 6 :
-		  CursorAddr=zx_pxy2saddr(cursorX*3, cursorY*8+7,0xff);
+		  CursorAddr=zx_pxy2saddr(cursorX*3, cursorY*8+7,255);
 		  *CursorAddr= *CursorAddr ^ (56);
 		  break;
 		  case 7 :
-		  CursorAddr=zx_pxy2saddr(cursorX*3, cursorY*8+7,0xff);
+		  CursorAddr=zx_pxy2saddr(cursorX*3, cursorY*8+7,255);
 		  *CursorAddr= *CursorAddr ^ (7);
 		  break;		  
 		  }
@@ -157,20 +157,15 @@ void KeyReadMulti(unsigned char time_ms, unsigned char repeat)  //ACTIVE
           if      (chkey == 0x0C) {txdata[txbytes] = 0x08;} // Key Back Space (0x0C Form feed > Back space)
           else if (chkey == 0x0A) {txdata[txbytes] = 0x0D;} // Key ENTER (0x0A NL line feed, new line > 0x13 Carriage Return)
 
-
-
         //THIS ALL NEEDS A RE-THINK!  move to extended mode 1?
 
-          else if (chkey == 0x08) {txdata[txbytes] = 0x1b; txdata[++txbytes] = 0x5b; txdata[++txbytes] = 'D'; txbytes+2;} // Cursor key LEFT      
-          else if (chkey == 0x0a) {txdata[txbytes] = 0x1b; txdata[++txbytes] = 0x5b; txdata[++txbytes] = 'B'; txbytes+2;} // Cursor key DOWN
-          else if (chkey == 0x0b) {txdata[txbytes] = 0x1b; txdata[++txbytes] = 0x5b; txdata[++txbytes] = 'A'; txbytes+2;} // Cursor key UP
-          else if (chkey == 0x09) {txdata[txbytes] = 0x1b; txdata[++txbytes] = 0x5b; txdata[++txbytes] = 'C'; txbytes+2;} // Cursor key RIGHT
-/*          
-          else if (chkey == 0x04) {txdata[txbytes] = 0x1b; txdata[++txbytes] = 0x5b; txdata[++txbytes] = '5'; txdata[++txbytes] = '~'; txbytes+3;} // Page UP
-          else if (chkey == 0x05) {txdata[txbytes] = 0x1b; txdata[++txbytes] = 0x5b; txdata[++txbytes] = '6'; txdata[++txbytes] = '~'; txbytes+3;} // Page DOWN
-*/          
-          else if (chkey == 0x0E) {ExtendKeyFlag++; txbytes-1;}  // Symbol shift condition
-          else                    {txdata[txbytes] = chkey;}                   // UNCHANGED
+          else if (chkey == 0x08) {txdata[txbytes] = 0x1b; txdata[++txbytes] = 0x5b; txdata[++txbytes] = 'D'; txbytes+2;}                         // Cursor key LEFT      
+          else if (chkey == 0x0a) {txdata[txbytes] = 0x1b; txdata[++txbytes] = 0x5b; txdata[++txbytes] = 'B'; txbytes+2;}                         // Cursor key DOWN
+          else if (chkey == 0x0b) {txdata[txbytes] = 0x1b; txdata[++txbytes] = 0x5b; txdata[++txbytes] = 'A'; txbytes+2;}                         // Cursor key UP
+          else if (chkey == 0x09) {txdata[txbytes] = 0x1b; txdata[++txbytes] = 0x5b; txdata[++txbytes] = 'C'; txbytes+2;}                         // Cursor key RIGHT
+
+          else if (chkey == 0x0E) {ExtendKeyFlag++; txbytes-1;}                                                                                   // Symbol shift condition
+          else                    {txdata[txbytes] = chkey;}                                                                                      // UNCHANGED
           ++txbytes;
         }
         chkey = NULL;
@@ -178,29 +173,55 @@ void KeyReadMulti(unsigned char time_ms, unsigned char repeat)  //ACTIVE
       else if (ExtendKeyFlag == 1)  // Level 1 extended mode - PC Keys
       {
         zx_border(INK_GREEN); 
-        printf("ExtendKeyFlag = %d \n",ExtendKeyFlag);
+        //printf("ExtendKeyFlag = %d \n",ExtendKeyFlag);
 
-        if        (chkey == 0x0E) {ExtendKeyFlag++;}  // Next extended mode      
-        else if   (chkey == 'e')  {zx_border(INK_MAGENTA); txdata[txbytes] = 0x1b; txbytes++; ExtendKeyFlag = 0;}  //  Escape key
-        else if   (chkey == 'c')  {zx_border(INK_MAGENTA); txdata[txbytes] = 0x1b; txbytes++; ExtendKeyFlag = 0;}// CTRL key
+        if        (chkey == 0x0E) {ExtendKeyFlag++;}                                                                                              // Next extended mode      
+        else if   (chkey == 'e')  {zx_border(INK_MAGENTA); txdata[txbytes] = 0x1b; txbytes++; ExtendKeyFlag = 0;}                                 // Escape key
+        else if   (chkey == 'c')  {ExtendKeyFlag++;}                                                                                              // CTRL key
+        else if   (chkey == 'u') {txdata[txbytes] = 0x1b; txdata[++txbytes] = 0x5b; txdata[++txbytes] = '5'; txdata[++txbytes] = '~'; txbytes+3;} // Page UP
+        else if   (chkey == 'd') {txdata[txbytes] = 0x1b; txdata[++txbytes] = 0x5b; txdata[++txbytes] = '6'; txdata[++txbytes] = '~'; txbytes+3;} // Page DOWN
         //ALT 
         //F1 - F10 (F11 F12) ?
         //TAB
-        //Page Up
-        //Page Down
         //Home
         //End
         //Insert
         
       }
-      else if (ExtendKeyFlag == 2)  // Level 2 extended mode - Control + Key combo
+      else if (ExtendKeyFlag == 2)  // Level 2 extended mode - CTRL + Key combo
       {
         zx_border(INK_CYAN); 
-        printf("ExtendKeyFlag = %d \n",ExtendKeyFlag);
+        //printf("ExtendKeyFlag = %d \n",ExtendKeyFlag);
 
         if        (chkey == 0x0E) {ExtendKeyFlag++;}  // Next extended mode
-        
-
+        else if   (chkey == ' ')                   {txdata[txbytes] = 0; txbytes = txbytes + 1;}
+        else if   (chkey == 'a' || chkey == 'A')   {txdata[txbytes] = 1; txbytes = txbytes + 1;}
+        else if   (chkey == 'b' || chkey == 'B')   {txdata[txbytes] = 2; txbytes = txbytes + 1;}
+        else if   (chkey == 'c' || chkey == 'C')   {txdata[txbytes] = 3; txbytes = txbytes + 1;}
+        else if   (chkey == 'd' || chkey == 'D')   {txdata[txbytes] = 4; txbytes = txbytes + 1;}
+        else if   (chkey == 'e' || chkey == 'E')   {txdata[txbytes] = 5; txbytes = txbytes + 1;}
+        else if   (chkey == 'f' || chkey == 'F')   {txdata[txbytes] = 6; txbytes = txbytes + 1;}
+        else if   (chkey == 'g' || chkey == 'G')   {txdata[txbytes] = 7; txbytes = txbytes + 1;}
+        else if   (chkey == 'h' || chkey == 'H')   {txdata[txbytes] = 8; txbytes = txbytes + 1;}
+        else if   (chkey == 'i' || chkey == 'I')   {txdata[txbytes] = 9; txbytes = txbytes + 1;}
+        else if   (chkey == 'j' || chkey == 'J')   {txdata[txbytes] = 10; txbytes = txbytes + 1;}
+        else if   (chkey == 'k' || chkey == 'K')   {txdata[txbytes] = 11; txbytes = txbytes + 1;}
+        else if   (chkey == 'l' || chkey == 'L')   {txdata[txbytes] = 12; txbytes = txbytes + 1;}
+        else if   (chkey == 'm' || chkey == 'M')   {txdata[txbytes] = 13; txbytes = txbytes + 1;}
+        else if   (chkey == 'n' || chkey == 'N')   {txdata[txbytes] = 14; txbytes = txbytes + 1;}
+        else if   (chkey == 'o' || chkey == 'O')   {txdata[txbytes] = 15; txbytes = txbytes + 1;}
+        else if   (chkey == 'p' || chkey == 'P')   {txdata[txbytes] = 16; txbytes = txbytes + 1;}
+        else if   (chkey == 'q' || chkey == 'Q')   {txdata[txbytes] = 17; txbytes = txbytes + 1;}
+        else if   (chkey == 'r' || chkey == 'R')   {txdata[txbytes] = 18; txbytes = txbytes + 1;}
+        else if   (chkey == 's' || chkey == 'S')   {txdata[txbytes] = 19; txbytes = txbytes + 1;}
+        else if   (chkey == 't' || chkey == 'T')   {txdata[txbytes] = 20; txbytes = txbytes + 1;}
+        else if   (chkey == 'u' || chkey == 'U')   {txdata[txbytes] = 21; txbytes = txbytes + 1;}
+        else if   (chkey == 'v' || chkey == 'V')   {txdata[txbytes] = 22; txbytes = txbytes + 1;}
+        else if   (chkey == 'w' || chkey == 'W')   {txdata[txbytes] = 23; txbytes = txbytes + 1;}
+        else if   (chkey == 'x' || chkey == 'X')   {txdata[txbytes] = 24; txbytes = txbytes + 1;}
+        else if   (chkey == 'y' || chkey == 'Y')   {txdata[txbytes] = 25; txbytes = txbytes + 1;}
+        else if   (chkey == 'z' || chkey == 'Z')   {txdata[txbytes] = 26; txbytes = txbytes + 1;}
+        //else if   (chkey == '')   {;}
       }
       else  // RESET
       {
