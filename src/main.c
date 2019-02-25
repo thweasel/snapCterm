@@ -317,15 +317,13 @@ void main(void)
 
   // Clean up the screen
   zx_border(INK_BLACK);
-  clrscr();
   zx_colour(PAPER_BLACK|INK_WHITE);
+  clrscr();
   
   //ANSI ESCAPE codes TO SET UP
   cprintf("\033[37;40m");  // esc [ ESC SEQUENCE (Foreground)White;(Background)Black m (to terminate)
-  //cprintf("\033[?25h");    //Show cursor?
-  
  
-  //title();
+  //title();  //  -- TITLE --  
   
   while(1)  // MAIN PROGRAM LOOP
   {
