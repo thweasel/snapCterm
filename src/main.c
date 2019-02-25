@@ -14,7 +14,7 @@
 //GLOBALS
 static unsigned char inbyte, chkey, lastbyte;
 static unsigned char *CursorAddr;
-static unsigned char rxdata[10] ,rxbytes ,bytecount;  //  RXDATA -- 10[/] 20[/] 40[-] 80[x]
+static unsigned char rxdata[20] ,rxbytes ,bytecount;  //  RXDATA -- 10[/] 20[/] 40[-] 80[x]
 static unsigned char txdata[20], txbytes;  //  TX DATA -- 20
 static uint_fast8_t ExtendKeyFlag, CursorFlag, CursorMask, ESCFlag;
 static int cursorX, cursorY;
@@ -248,21 +248,23 @@ void KeyReadMulti(unsigned char time_ms, unsigned char repeat)  //ACTIVE  --  TX
     }    
   }while(--repeat!=0);
 
-  //SWAP THE TX METHOD to DO WHILE using bytecount like RXDATA
-
   //zx_border(INK_WHITE);  //DEBUG-TIMING
   if(txbytes>0)
   {
+
     //printf("txbytes = %d",txbytes);  //DEBUG-TXBUFFER
     //zx_border(INK_YELLOW);  //DEBUG-TIMING
     //zx_border(txbytes);  //DEBUG-TXBUFFER
-    for (unsigned char j=0;j<txbytes;j++)
+
+    bytecount = 0;
+    do
     {
-      rs232_put(txdata[j]);
-      //printf("%c",txdata[j]);  //DEBUG-TXBUFFER
-    }   
-    //printf("\n");  //DEBUG-TXBUFFER
+      rs232_put(txdata[bytecount]);
+    }while(++bytecount<txbytes);
+
   } 
+
+  
   //zx_border(INK_BLACK);  //DEBUG-TIMING
 }
 
