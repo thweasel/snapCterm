@@ -9,17 +9,16 @@
 #include <input.h>  //#include <input/input_zx.h>
 #include <string.h>
 #include <sound.h>  // sound for keyboard click
-#include <stdlib.h>
+//#include <stdlib.h>
 
 //GLOBALS
 static unsigned char inbyte, chkey, lastbyte;
 static unsigned char *CursorAddr;
-static char rxdata[20];  //18?
+static unsigned char rxdata[10] ,rxbytes ,bytecount;  //  RXDATA -- 10[/] 20[/] 40[-] 80[x]
+static unsigned char txdata[20], txbytes;  //  TX DATA -- 20
 static uint_fast8_t ExtendKeyFlag, CursorFlag, CursorMask, ESCFlag;
 static int cursorX, cursorY;
 
-//static int bytes,i;
-static unsigned char bytes,bytecount;
 
 //Font stuff
 #asm  
@@ -127,10 +126,9 @@ void ClearCursor(void)  // Version 2  --  Call this when not putting none printi
 }
 
 
-void KeyReadMulti(unsigned char time_ms, unsigned char repeat)  //ACTIVE
+void KeyReadMulti(unsigned char time_ms, unsigned char repeat)  //ACTIVE  --  TX loop needs work & more Key mappings
 {
-  unsigned char txdata[20];  //Way more than needed in testing i can hardly hit 2 characters
-  unsigned char txbytes = 0;
+  txbytes = 0;
   txdata[0]=NULL;
   //zx_border(INK_RED);  //DEBUG-TIMING
  
@@ -144,90 +142,104 @@ void KeyReadMulti(unsigned char time_ms, unsigned char repeat)  //ACTIVE
     if (txbytes < sizeof(txdata))
     {    
       chkey = getk();
-
-     if (ExtendKeyFlag == 0)  // Not extended mode
+      if (chkey != NULL)  //Key hit translations
       {
-        zx_border(INK_BLACK); 
-
-
-        if (chkey != NULL)  //Key hit translations
+        keyboard_click();  
+        //printf("%c",chkey);
+        if      (ExtendKeyFlag == 0)  // Not extended mode
         {
-          keyboard_click();        
-          // Some key presses need translating to other codes OR ESC[ sequences
-          if      (chkey == 0x0C) {txdata[txbytes] = 0x08;} // Key Back Space (0x0C Form feed > Back space)
-          else if (chkey == 0x0A) {txdata[txbytes] = 0x0D;} // Key ENTER (0x0A NL line feed, new line > 0x13 Carriage Return)
-
-        //THIS ALL NEEDS A RE-THINK!  move to extended mode 1?
-
-          else if (chkey == 0x08) {txdata[txbytes] = 0x1b; txdata[++txbytes] = 0x5b; txdata[++txbytes] = 'D'; txbytes+2;}                         // Cursor key LEFT      
-          else if (chkey == 0x0a) {txdata[txbytes] = 0x1b; txdata[++txbytes] = 0x5b; txdata[++txbytes] = 'B'; txbytes+2;}                         // Cursor key DOWN
-          else if (chkey == 0x0b) {txdata[txbytes] = 0x1b; txdata[++txbytes] = 0x5b; txdata[++txbytes] = 'A'; txbytes+2;}                         // Cursor key UP
-          else if (chkey == 0x09) {txdata[txbytes] = 0x1b; txdata[++txbytes] = 0x5b; txdata[++txbytes] = 'C'; txbytes+2;}                         // Cursor key RIGHT
-
-          else if (chkey == 0x0E) {ExtendKeyFlag++; txbytes-1;}                                                                                   // Symbol shift condition
-          else                    {txdata[txbytes] = chkey;}                                                                                      // UNCHANGED
-          ++txbytes;
+          //zx_border(INK_BLUE);             
+          if      (chkey == 0x0E) {ExtendKeyFlag++;}                                  // Symbol shift condition
+          else if (chkey == 0x0C) {txdata[txbytes] = 0x08   ;txbytes = txbytes+1;}    // Key Back Space (0x0C Form feed > Back space)
+          else if (chkey == 0x0A) {txdata[txbytes] = 0x0D   ;txbytes = txbytes+1;}    // Key ENTER (0x0A NL line feed, new line > 0x13 Carriage Return)        
+          else                    {txdata[txbytes] = chkey  ;txbytes = txbytes+1;}    // UNCHANGED
         }
-        chkey = NULL;
-      }
-      else if (ExtendKeyFlag == 1)  // Level 1 extended mode - PC Keys
-      {
-        zx_border(INK_GREEN); 
-        //printf("ExtendKeyFlag = %d \n",ExtendKeyFlag);
+        else if (ExtendKeyFlag == 1)  // Level 1 extended mode - PC Keys
+        {
+          if      (chkey == 0x0E)   {ExtendKeyFlag=0;}                                                                                                            // Exit Extend modes      
+          else if (chkey == 'c')    {ExtendKeyFlag=2;}                                                                                                            // CTRL > CTRL Extend mode
+          
+          else if (chkey == 't')    {txdata[txbytes] = 0x09; txbytes = txbytes+1;}                                                                                // TAB key
+          
+          else if (chkey == 'e')    {txdata[txbytes] = 0x1b; txbytes = txbytes+1; ExtendKeyFlag = 0;}                                                             // Escape key
+          
+          else if (chkey == 'u')    {txdata[txbytes] = 0x1b; txdata[txbytes+1] = 0x5b; txdata[txbytes+2] = '5'; txdata[txbytes+3] = '~'; txbytes = txbytes+4;}    // Page UP
+          else if (chkey == 'd')    {txdata[txbytes] = 0x1b; txdata[txbytes+1] = 0x5b; txdata[txbytes+2] = '6'; txdata[txbytes+3] = '~'; txbytes = txbytes+4;}    // Page DOWN
+          
+          
+          //CURSOR
+          else if (chkey == 0x08)   {txdata[txbytes] = 0x1b; txdata[txbytes+1] = 'O'; txdata[txbytes+2] = 'D'; txbytes = txbytes+3;}                              // Cursor key LEFT      
+          else if (chkey == 0x0a)   {txdata[txbytes] = 0x1b; txdata[txbytes+1] = 'O'; txdata[txbytes+2] = 'B'; txbytes = txbytes+3;}                              // Cursor key DOWN  -- Clash with ENTER
+          else if (chkey == 0x0b)   {txdata[txbytes] = 0x1b; txdata[txbytes+1] = 'O'; txdata[txbytes+2] = 'A'; txbytes = txbytes+3;}                              // Cursor key UP
+          else if (chkey == 0x09)   {txdata[txbytes] = 0x1b; txdata[txbytes+1] = 'O'; txdata[txbytes+2] = 'C'; txbytes = txbytes+3;}                              // Cursor key RIGHT
 
-        if        (chkey == 0x0E) {ExtendKeyFlag++;}                                                                                              // Next extended mode      
-        else if   (chkey == 'e')  {zx_border(INK_MAGENTA); txdata[txbytes] = 0x1b; txbytes++; ExtendKeyFlag = 0;}                                 // Escape key
-        else if   (chkey == 'c')  {ExtendKeyFlag++;}                                                                                              // CTRL key
-        else if   (chkey == 'u') {txdata[txbytes] = 0x1b; txdata[++txbytes] = 0x5b; txdata[++txbytes] = '5'; txdata[++txbytes] = '~'; txbytes+3;} // Page UP
-        else if   (chkey == 'd') {txdata[txbytes] = 0x1b; txdata[++txbytes] = 0x5b; txdata[++txbytes] = '6'; txdata[++txbytes] = '~'; txbytes+3;} // Page DOWN
-        //ALT 
-        //F1 - F10 (F11 F12) ?
-        //TAB
-        //Home
-        //End
-        //Insert
-        
-      }
-      else if (ExtendKeyFlag == 2)  // Level 2 extended mode - CTRL + Key combo
-      {
-        zx_border(INK_CYAN); 
-        //printf("ExtendKeyFlag = %d \n",ExtendKeyFlag);
+          //ALT 
+          //F1 - F10 (F11 F12) ?
+          //Home
+          //End
+          //Insert
+          
+        }
+        else if (ExtendKeyFlag == 2)  // Level 2 extended mode - CTRL + Key combo
+        {
+          zx_border(INK_CYAN); 
+          //printf("ExtendKeyFlag = %d \n",ExtendKeyFlag);
 
-        if        (chkey == 0x0E) {ExtendKeyFlag++;}  // Next extended mode
-        else if   (chkey == ' ')                   {txdata[txbytes] = 0; txbytes = txbytes + 1;}
-        else if   (chkey == 'a' || chkey == 'A')   {txdata[txbytes] = 1; txbytes = txbytes + 1;}
-        else if   (chkey == 'b' || chkey == 'B')   {txdata[txbytes] = 2; txbytes = txbytes + 1;}
-        else if   (chkey == 'c' || chkey == 'C')   {txdata[txbytes] = 3; txbytes = txbytes + 1;}
-        else if   (chkey == 'd' || chkey == 'D')   {txdata[txbytes] = 4; txbytes = txbytes + 1;}
-        else if   (chkey == 'e' || chkey == 'E')   {txdata[txbytes] = 5; txbytes = txbytes + 1;}
-        else if   (chkey == 'f' || chkey == 'F')   {txdata[txbytes] = 6; txbytes = txbytes + 1;}
-        else if   (chkey == 'g' || chkey == 'G')   {txdata[txbytes] = 7; txbytes = txbytes + 1;}
-        else if   (chkey == 'h' || chkey == 'H')   {txdata[txbytes] = 8; txbytes = txbytes + 1;}
-        else if   (chkey == 'i' || chkey == 'I')   {txdata[txbytes] = 9; txbytes = txbytes + 1;}
-        else if   (chkey == 'j' || chkey == 'J')   {txdata[txbytes] = 10; txbytes = txbytes + 1;}
-        else if   (chkey == 'k' || chkey == 'K')   {txdata[txbytes] = 11; txbytes = txbytes + 1;}
-        else if   (chkey == 'l' || chkey == 'L')   {txdata[txbytes] = 12; txbytes = txbytes + 1;}
-        else if   (chkey == 'm' || chkey == 'M')   {txdata[txbytes] = 13; txbytes = txbytes + 1;}
-        else if   (chkey == 'n' || chkey == 'N')   {txdata[txbytes] = 14; txbytes = txbytes + 1;}
-        else if   (chkey == 'o' || chkey == 'O')   {txdata[txbytes] = 15; txbytes = txbytes + 1;}
-        else if   (chkey == 'p' || chkey == 'P')   {txdata[txbytes] = 16; txbytes = txbytes + 1;}
-        else if   (chkey == 'q' || chkey == 'Q')   {txdata[txbytes] = 17; txbytes = txbytes + 1;}
-        else if   (chkey == 'r' || chkey == 'R')   {txdata[txbytes] = 18; txbytes = txbytes + 1;}
-        else if   (chkey == 's' || chkey == 'S')   {txdata[txbytes] = 19; txbytes = txbytes + 1;}
-        else if   (chkey == 't' || chkey == 'T')   {txdata[txbytes] = 20; txbytes = txbytes + 1;}
-        else if   (chkey == 'u' || chkey == 'U')   {txdata[txbytes] = 21; txbytes = txbytes + 1;}
-        else if   (chkey == 'v' || chkey == 'V')   {txdata[txbytes] = 22; txbytes = txbytes + 1;}
-        else if   (chkey == 'w' || chkey == 'W')   {txdata[txbytes] = 23; txbytes = txbytes + 1;}
-        else if   (chkey == 'x' || chkey == 'X')   {txdata[txbytes] = 24; txbytes = txbytes + 1;}
-        else if   (chkey == 'y' || chkey == 'Y')   {txdata[txbytes] = 25; txbytes = txbytes + 1;}
-        else if   (chkey == 'z' || chkey == 'Z')   {txdata[txbytes] = 26; txbytes = txbytes + 1;}
-        //else if   (chkey == '')   {;}
+          if        (chkey == 0x0E)                  {ExtendKeyFlag=0;}  // EXIT to normal mode
+          else if   (chkey == ' ')                   {txdata[txbytes] =  0; txbytes = txbytes + 1;}
+          else if   (chkey == 'a' || chkey == 'A')   {txdata[txbytes] =  1; txbytes = txbytes + 1;}
+          else if   (chkey == 'b' || chkey == 'B')   {txdata[txbytes] =  2; txbytes = txbytes + 1;}
+          else if   (chkey == 'c' || chkey == 'C')   {txdata[txbytes] =  3; txbytes = txbytes + 1;}
+          else if   (chkey == 'd' || chkey == 'D')   {txdata[txbytes] =  4; txbytes = txbytes + 1;}
+          else if   (chkey == 'e' || chkey == 'E')   {txdata[txbytes] =  5; txbytes = txbytes + 1;}
+          else if   (chkey == 'f' || chkey == 'F')   {txdata[txbytes] =  6; txbytes = txbytes + 1;}
+          else if   (chkey == 'g' || chkey == 'G')   {txdata[txbytes] =  7; txbytes = txbytes + 1;}
+          else if   (chkey == 'h' || chkey == 'H')   {txdata[txbytes] =  8; txbytes = txbytes + 1;}
+          else if   (chkey == 'i' || chkey == 'I')   {txdata[txbytes] =  9; txbytes = txbytes + 1;}
+          else if   (chkey == 'j' || chkey == 'J')   {txdata[txbytes] = 10; txbytes = txbytes + 1;}
+          else if   (chkey == 'k' || chkey == 'K')   {txdata[txbytes] = 11; txbytes = txbytes + 1;}
+          else if   (chkey == 'l' || chkey == 'L')   {txdata[txbytes] = 12; txbytes = txbytes + 1;}
+          else if   (chkey == 'm' || chkey == 'M')   {txdata[txbytes] = 13; txbytes = txbytes + 1;}
+          else if   (chkey == 'n' || chkey == 'N')   {txdata[txbytes] = 14; txbytes = txbytes + 1;}
+          else if   (chkey == 'o' || chkey == 'O')   {txdata[txbytes] = 15; txbytes = txbytes + 1;}
+          else if   (chkey == 'p' || chkey == 'P')   {txdata[txbytes] = 16; txbytes = txbytes + 1;}
+          else if   (chkey == 'q' || chkey == 'Q')   {txdata[txbytes] = 17; txbytes = txbytes + 1;}
+          else if   (chkey == 'r' || chkey == 'R')   {txdata[txbytes] = 18; txbytes = txbytes + 1;}
+          else if   (chkey == 's' || chkey == 'S')   {txdata[txbytes] = 19; txbytes = txbytes + 1;}
+          else if   (chkey == 't' || chkey == 'T')   {txdata[txbytes] = 20; txbytes = txbytes + 1;}
+          else if   (chkey == 'u' || chkey == 'U')   {txdata[txbytes] = 21; txbytes = txbytes + 1;}
+          else if   (chkey == 'v' || chkey == 'V')   {txdata[txbytes] = 22; txbytes = txbytes + 1;}
+          else if   (chkey == 'w' || chkey == 'W')   {txdata[txbytes] = 23; txbytes = txbytes + 1;}
+          else if   (chkey == 'x' || chkey == 'X')   {txdata[txbytes] = 24; txbytes = txbytes + 1;}
+          else if   (chkey == 'y' || chkey == 'Y')   {txdata[txbytes] = 25; txbytes = txbytes + 1;}
+          else if   (chkey == 'z' || chkey == 'Z')   {txdata[txbytes] = 26; txbytes = txbytes + 1;}
+          //else if   (chkey == '')   {;}
+        }
+        else  // RESET  --  Can not happen?
+        {
+          ExtendKeyFlag = 0;
+          printf("!!!PANIC!!! - KeyReadMulti -");
+        }
       }
-      else  // RESET
+
+      switch(ExtendKeyFlag)
       {
-        zx_border(INK_WHITE);
-        ExtendKeyFlag = 0;
+        case 0 :
+          zx_border(INK_BLACK);
+        break;
+        case 1 :
+          zx_border(INK_GREEN);
+        break;
+        case 2 :
+          zx_border(INK_CYAN);
+        break;
+        default :
+          zx_border(INK_MAGENTA);
+          ExtendKeyFlag=0;
+        break;
       }
+
+      chkey = NULL;
     }
     else 
     {
@@ -236,8 +248,9 @@ void KeyReadMulti(unsigned char time_ms, unsigned char repeat)  //ACTIVE
     }    
   }while(--repeat!=0);
 
-  
-//zx_border(INK_WHITE);  //DEBUG-TIMING
+  //SWAP THE TX METHOD to DO WHILE using bytecount like RXDATA
+
+  //zx_border(INK_WHITE);  //DEBUG-TIMING
   if(txbytes>0)
   {
     //printf("txbytes = %d",txbytes);  //DEBUG-TXBUFFER
@@ -318,13 +331,14 @@ void main(void)
   {
 
     DrawCursor();
-    //RXDATA
+
+    //RXDATA  --  move to function?
     
     if(rs232_get(&inbyte)!=RS_ERR_NO_DATA)  //any incoming data capture and print
     {
       //zx_border(INK_WHITE);  //DEBUG-TIMING
       rxdata[0]=inbyte;         //Buffer the first character
-      bytes = sizeof(rxdata);
+      rxbytes = sizeof(rxdata);
 
       bytecount=1;
       do
@@ -335,53 +349,52 @@ void main(void)
         }
         else  //Else no character record the number of bytes we have collected
         {
-          bytes = bytecount;
+          rxbytes = bytecount;
           bytecount = sizeof(rxdata)+1; //kill the for loop
         }
 
-      }while(++bytecount<bytes);
+      }while(++bytecount<rxbytes);
 
 
-//  TODO in Draw Screen (ESC code catching)
-//  Need to handle Device Status requests.  
-/*
-http://www.termsys.demon.co.uk/vtansi.htm
-https://en.wikipedia.org/wiki/ANSI_escape_code#Escape_sequences
+      //  TODO in Draw Screen (ESC code catching)
+      //  Need to handle Device Status requests.  
+      /*
+      http://www.termsys.demon.co.uk/vtansi.htm
+      https://en.wikipedia.org/wiki/ANSI_escape_code#Escape_sequences
 
-Device Status
+      Device Status
 
-The following codes are used for reporting terminal/display settings, and vary depending on the implementation:
+      The following codes are used for reporting terminal/display settings, and vary depending on the implementation:
 
-Query Device Code	      <ESC>[c                 Requests a Report Device Code response from the device.
-Report Device Code	    <ESC>[{code}0c          Generated by the device in response to Query Device Code request.
+      Query Device Code	      <ESC>[c                 Requests a Report Device Code response from the device.
+      Report Device Code	    <ESC>[{code}0c          Generated by the device in response to Query Device Code request.
 
-Query Device Status	    <ESC>[5n                Requests a Report Device Status response from the device.
-Report Device OK	      <ESC>[0n                Generated by the device in response to a Query Device Status request; indicates that device is functioning correctly.
-Report Device Failure	  <ESC>[3n                Generated by the device in response to a Query Device Status request; indicates that device is functioning improperly.
+      Query Device Status	    <ESC>[5n                Requests a Report Device Status response from the device.
+      Report Device OK	      <ESC>[0n                Generated by the device in response to a Query Device Status request; indicates that device is functioning correctly.
+      Report Device Failure	  <ESC>[3n                Generated by the device in response to a Query Device Status request; indicates that device is functioning improperly.
 
-Query Cursor Position	  <ESC>[6n                Requests a Report Cursor Position response from the device.
-Report Cursor Position	<ESC>[{ROW};{COLUMN}R   Generated by the device in response to a Query Cursor Position request; reports current cursor position.
-*/
+      Query Cursor Position	  <ESC>[6n                Requests a Report Cursor Position response from the device.
+      Report Cursor Position	<ESC>[{ROW};{COLUMN}R   Generated by the device in response to a Query Cursor Position request; reports current cursor position.
+      */
 
-      //DRAW SCREEN
+      //DRAW SCREEN  (Technically process the RX Buffer, act on ESC code and push text to screen)
       
       bytecount=0;
       do
       {
-        ClearCursor();
+        ClearCursor();  // Blank characters wont over write the cursor if its showing
         //zx_border(INK_BLACK); //DEBUG-TIMING
         inbyte = rxdata[bytecount];
 
-        //Catch the start of ESC [  --  Need to stop Cursor movement to preserve the ESC [ sequence (drawing and deleting puts to the console)
-        if (inbyte == 0x1b)
+        
+        if (inbyte == 0x1b) //Catch the start of ESC [  --  Need to stop Cursor movement to preserve the ESC [ sequence (drawing and deleting puts to the console)
         {
-//          ClearCursor();   // hide cursor
           ESCFlag = 1;  // no cursor moves
         }
 
-        if(lastbyte == 0x1b && inbyte != 0x5b)
+        if(lastbyte == 0x1b && inbyte != 0x5b)  // just an escape fine not an ESC [ sequence (reset)
         {
-          ESCFlag = 0;  // just an escape fine not an ESC [ sequence (reset)
+          ESCFlag = 0;  
         }
 
        
@@ -420,37 +433,29 @@ Report Cursor Position	<ESC>[{ROW};{COLUMN}R   Generated by the device in respon
             //rs232_put(0x52);        // R
             rs232_put('R');
           }
-//        ClearCursor();
           fputc_cons(inbyte);
           ESCFlag = 0;
-//          DrawCursor();
         }
         else if (ESCFlag == 1)  //  During ESC [  --  Cursor move OFF
         {
-          //ClearCursor();
           fputc_cons(inbyte);
         }
         else if(ESCFlag == 0)  //  No ESC [  --  Cursor move ON
         {
-          
-//          ClearCursor();  //  Seems to fix cases where the Cursor isnt over written (if its showing)
           // filter input here
 
-          if (lastbyte==0xff && inbyte==0xff)  //catch Telnet IAC drop it
-          //if(inbyte==0xff)
+          if (lastbyte==0xff && inbyte==0xff)  //catch Telnet IAC drop it  --  Do we need this?
           {
             //fputc_cons(inbyte);
             inbyte=0;  //reset inbyte
           }
-          else if(inbyte == 0x08)  //Backspace
+          else if(inbyte == 0x08)  //Backspace  --  Drop this?
           {
-    //        ClearCursor();
             fputc_cons(inbyte);
           }
-          else if (inbyte == 0x09) // TAB
+          else if (inbyte == 0x09) // TAB  --  needed ??
           {
-            //fputc_cons(0x07);  // BEEP-DEBUG
-
+            fputc_cons(0x07);  // BEEP-DEBUG
             fputc_cons(inbyte);
 
           }        
@@ -461,7 +466,6 @@ Report Cursor Position	<ESC>[{ROW};{COLUMN}R   Generated by the device in respon
           }
           else if (inbyte==0x0d)  // Carriage Return
           {  // could be left out as 0x0d triggers a new line if printed to screen
-    //        ClearCursor();
             fputc_cons(inbyte);
             newline_attr();
 
@@ -474,10 +478,8 @@ Report Cursor Position	<ESC>[{ROW};{COLUMN}R   Generated by the device in respon
           }
           else if (lastbyte==0x0d && inbyte==0x0a)  // Carriage Return && Line Feed combo
           {
-            //ClearCursor();
             fputc_cons(inbyte);
             newline_attr();          
-            //inbyte=0;  //reset inbyte
           }
           else  // default output the character to the screen 
           {
@@ -487,11 +489,10 @@ Report Cursor Position	<ESC>[{ROW};{COLUMN}R   Generated by the device in respon
               newline_attr();
             }
           }
-          //DrawCursor();
         }
         else
         {
-          printf("!!! PANIC !!!");
+          printf("!!! PANIC !!! - DRAW SCREEN");
           return;
         }
 
@@ -500,10 +501,10 @@ Report Cursor Position	<ESC>[{ROW};{COLUMN}R   Generated by the device in respon
         //QUICK keyboard check if we are reading alot so we can interupt
         //zx_border(INK_CYAN);  //DEBUG
         //KeyRead(0,1);
-        DrawCursor();
-        KeyReadMulti(0,2);
+        //DrawCursor();
+        KeyReadMulti(0,2);  // Chance to catch key while rxdata
 
-      }while(++bytecount<bytes);
+      }while(++bytecount<rxbytes);
     }
     else //no incoming data check keyboard
     {
