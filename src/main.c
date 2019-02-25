@@ -16,7 +16,7 @@ static unsigned char inbyte, chkey, lastbyte;
 static unsigned char *CursorAddr;
 static unsigned char rxdata[20] ,rxbytes ,bytecount;  //  RXDATA -- 10[/] 20[/] 40[-] 80[x]
 static unsigned char txdata[20], txbytes;  //  TX DATA -- 20
-static uint_fast8_t ExtendKeyFlag, CursorFlag, CursorMask, ESCFlag;
+static uint_fast8_t ExtendKeyFlag, CursorFlag, CursorMask, ESCFlag, MonoFlag;
 static int cursorX, cursorY;
 
 
@@ -41,15 +41,47 @@ void newline_attr()  //ACTIVE
     row_attr = 23;
     attr = zx_cyx2aaddr(23,31);
 
-    do
+    if(MonoFlag > 0 && MonoFlag < 8)
     {
-        if (7 != *attr)
-        memset(attr - 31, 7, 32);
-
-        attr = zx_aaddrcup(attr);
+      do
+      {
+          memset(attr - 31, MonoFlag, 32);
+          attr = zx_aaddrcup(attr);
+      }
+      while (row_attr-- != 0);
     }
-    while (row_attr-- != 0);
+    else 
+    {
+      do
+      {
+          if (7 != *attr)
+          memset(attr - 31, 7, 32);
 
+          attr = zx_aaddrcup(attr);
+      }
+      while (row_attr-- != 0);
+    }
+
+}
+
+void mono()  // MONO SCREEN MODE
+{
+    unsigned char row_attr;  //static and global these?  Probably change it to a 8 bit int...
+    unsigned char *attr;
+
+    if(MonoFlag > 0 && MonoFlag < 8)
+    {
+      row_attr = 23;
+      attr = zx_cyx2aaddr(23,31);
+
+      do
+      {
+          memset(attr - 31, MonoFlag, 32);
+          attr = zx_aaddrcup(attr);
+      }
+      while (row_attr-- != 0);
+    }
+    else {MonoFlag=0;}
 }
 
 void keyboard_click(void)  //ACTIVE
@@ -157,7 +189,8 @@ void KeyReadMulti(unsigned char time_ms, unsigned char repeat)  //ACTIVE  --  TX
         else if (ExtendKeyFlag == 1)  // Level 1 extended mode - PC Keys
         {
           if      (chkey == 0x0E)   {ExtendKeyFlag=0;}                                                                                                            // Exit Extend modes      
-          else if (chkey == 'c')    {ExtendKeyFlag=2;}                                                                                                            // CTRL > CTRL Extend mode
+          else if (chkey == 'c')    {ExtendKeyFlag=2;}
+          else if (chkey == 'm')    {MonoFlag++; mono();}  //  Need to flag this out not call the function                                                                                                           // CTRL > CTRL Extend mode
           
           else if (chkey == 't')    {txdata[txbytes] = 0x09; txbytes = txbytes+1;}                                                                                // TAB key
           
@@ -513,6 +546,8 @@ void main(void)
 
       KeyReadMulti(10,30);
     }
+
+    if(MonoFlag != 0) {mono();}
 
   }
 
