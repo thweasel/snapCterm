@@ -39,7 +39,6 @@ void newline_attr()  //ACTIVE
 {//Allen Albright's method  -- Extended to cover MONO mode
     row_attr = 23;
     attr = zx_cyx2aaddr(23,31);
-
     if(MonoFlag > 0 && MonoFlag < 8)
     {
       do
@@ -55,12 +54,10 @@ void newline_attr()  //ACTIVE
       {
           if (7 != *attr)
           memset(attr - 31, 7, 32);
-
           attr = zx_aaddrcup(attr);
       }
       while (row_attr-- != 0);
     }
-
 }
 
 void mono()  // MONO SCREEN MODE
@@ -69,7 +66,6 @@ void mono()  // MONO SCREEN MODE
     {
       row_attr = 23;
       attr = zx_cyx2aaddr(23,31);
-
       do
       {
           memset(attr - 31, MonoFlag, 32);
@@ -82,20 +78,16 @@ void mono()  // MONO SCREEN MODE
 
 void keyboard_click(void)  //ACTIVE
 {//Thomas Cherryhomes key click
-
-  // I should probably change the loop counter in here to something static and global this is called alot
   unsigned char i,j;
   for (i=0;i<=10;i++)
   {
       bit_click();
       for (j=0;j<4;j++) {/*NOP*/}
   }
-	
 }
 
 void DrawCursor(void)  // Version 2
 {
-  
   cursorX = wherex();
   cursorY = wherey();
 
@@ -173,10 +165,8 @@ void KeyReadMulti(unsigned char time_ms, unsigned char repeat)  //ACTIVE  --  TX
       if (chkey != NULL)  //Key hit translations
       {
         keyboard_click();  
-        //printf("%c",chkey);
         if      (ExtendKeyFlag == 0)  // Not extended mode
         {
-          //zx_border(INK_BLUE);             
           if      (chkey == 0x0E) {ExtendKeyFlag++;}                                  // Symbol shift condition
           else if (chkey == 0x0C) {txdata[txbytes] = 0x08   ;txbytes = txbytes+1;}    // Key Back Space (0x0C Form feed > Back space)
           else if (chkey == 0x0A) {txdata[txbytes] = 0x0D   ;txbytes = txbytes+1;}    // Key ENTER (0x0A NL line feed, new line > 0x13 Carriage Return)        
@@ -211,9 +201,6 @@ void KeyReadMulti(unsigned char time_ms, unsigned char repeat)  //ACTIVE  --  TX
         }
         else if (ExtendKeyFlag == 2)  // Level 2 extended mode - CTRL + Key combo
         {
-          zx_border(INK_CYAN); 
-          //printf("ExtendKeyFlag = %d \n",ExtendKeyFlag);
-
           if        (chkey == 0x0E)                  {ExtendKeyFlag=0;}  // EXIT to normal mode
           else if   (chkey == ' ')                   {txdata[txbytes] =  0; txbytes = txbytes + 1;}
           else if   (chkey == 'a' || chkey == 'A')   {txdata[txbytes] =  1; txbytes = txbytes + 1;}
@@ -280,20 +267,13 @@ void KeyReadMulti(unsigned char time_ms, unsigned char repeat)  //ACTIVE  --  TX
   //zx_border(INK_WHITE);  //DEBUG-TIMING
   if(txbytes>0)
   {
-
-    //printf("txbytes = %d",txbytes);  //DEBUG-TXBUFFER
     //zx_border(INK_YELLOW);  //DEBUG-TIMING
-    //zx_border(txbytes);  //DEBUG-TXBUFFER
-
     bytecount = 0;
     do
     {
       rs232_put(txdata[bytecount]);
     }while(++bytecount<txbytes);
-
-  } 
-
-  
+  }
   //zx_border(INK_BLACK);  //DEBUG-TIMING
 }
 
@@ -331,7 +311,6 @@ void title(void)
     printf("\r");  
     newline_attr();
   }while(--titlescroll!=0);
-
 }
 
 void main(void)
@@ -384,7 +363,6 @@ void main(void)
 
       }while(++bytecount<rxbytes);
 
-
       //  TODO in Draw Screen (ESC code catching)
       //  Need to handle Device Status requests.  
       //DRAW SCREEN  (Technically process the RX Buffer, act on ESC code and push text to screen)
@@ -409,29 +387,26 @@ void main(void)
 */
        
         //  Putting to console
-        if(inbyte >= 0x40 && inbyte <= 0x7f && inbyte != 0x5b && ESCFlag == 1)  // Catch the END of ESC [  --  Turn Cursor move ON -- Filtering [ (0x5b)
-        {
-          if(inbyte == 0x6e && lastbyte == 0x36)  //Report cursor possition -- ESC [ ROW ; COLUMN R  Row and column need to be as TEXT
-          {
+        if(inbyte >= 0x40 && inbyte <= 0x7f && inbyte != 0x5b && ESCFlag == 1)  
+        {// Catch the END of ESC [  --  Turn Cursor move ON -- Filtering [ (0x5b)
+          
+          if(inbyte == 0x6e && lastbyte == 0x36)  
+          {//Report cursor possition -- ESC [ ROW ; COLUMN R  Row and column need to be as TEXT
             char s[2];        
 
             cursorY = wherey();
             cursorX = wherex();
 
             rs232_put(0x1b);          // ESC
-            rs232_put(0x5b);          // [
-            
+            rs232_put(0x5b);          // [           
             if(cursorY/10!=0)
             {
               itoa(cursorY/10,s,10);
-              rs232_put(s[0]);
+              rs232_put(s[0]);        // # (10s)
             }
             itoa(cursorY%10,s,10);
-            rs232_put(s[0]);
-
-            rs232_put(0x3b);          // ;
-            
-            
+            rs232_put(s[0]);          // # (1s)
+            rs232_put(0x3b);          // ;           
             if(cursorX/10!=0)         // # (10s)
             {
               itoa(cursorX/10,s,10);
@@ -439,9 +414,7 @@ void main(void)
             }
             itoa(cursorX%10,s,10);    // # (1s)
             rs232_put(s[0]);
-
-            //rs232_put(0x52);        // R
-            rs232_put('R');
+            rs232_put('R');           // R
           }
           fputc_cons(inbyte);
           ESCFlag = 0;
