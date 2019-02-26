@@ -186,7 +186,7 @@ void KeyReadMulti(unsigned char time_ms, unsigned char repeat)  //ACTIVE  --  TX
         {
           if      (chkey == 0x0E)   {ExtendKeyFlag=0;}                                                                                                            // Exit Extend modes      
           else if (chkey == 'c')    {ExtendKeyFlag=2;}
-          else if (chkey == 'm')    {MonoFlag++; mono();}  //  Need to flag this out not call the function                                                                                                           // CTRL > CTRL Extend mode
+          else if (chkey == 'm')    {MonoFlag++; if(MonoFlag>7){ExtendKeyFlag=0;} mono();}  //  Need to flag this out not call the function                                                                                                           // CTRL > CTRL Extend mode
           
           else if (chkey == 't')    {txdata[txbytes] = 0x09; txbytes = txbytes+1;}                                                                                // TAB key
           
