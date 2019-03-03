@@ -281,15 +281,14 @@ void demotitle(void)
 { 
   char titlescroll = 24;
   
-  printf("\07");
-  for (uint8_t z=0;z<10;++z) {DrawCursor();  in_Pause(200);}
+  for (uint8_t z=0;z<10;++z) {DrawCursor();  in_Pause(50);}
   printf("\033[32;40m");
   printf("[\373].80 columns  [\373].ASCII oem set  [\373].ANSI  [\373].colour clash   \n\n");
-  for (uint8_t z=0;z<10;++z) {DrawCursor();  in_Pause(200);}  
+  for (uint8_t z=0;z<10;++z) {DrawCursor();  in_Pause(100);}  
   printf("Terminal ready... ");
-  for (uint8_t z=0;z<10;++z) {DrawCursor();  in_Pause(200);}
+  for (uint8_t z=0;z<10;++z) {DrawCursor();  in_Pause(100);}
   ClearCursor();
-  printf("\033[37;40m");
+  printf("\07\033[37;40m");
   printf("\n\033[1m");
   printf("                                     _____  _                          \r");
   printf("                                    /  __ \\| |                         \r");
@@ -380,7 +379,7 @@ void main(void)
   while(1)  // MAIN PROGRAM LOOP
   {
 
-    //DrawCursor();
+    DrawCursor();
 
     //RXDATA  --  move to function?
     
@@ -420,8 +419,8 @@ void main(void)
         {
           ESCFlag = 1;  // no cursor moves
         }
-
-/*  This may not be TRUE
+//      MAY NOT BE TRUE - ESC codes that dont use [
+/*
         if(lastbyte == 0x1b && inbyte != 0x5b)  // just an escape fine not an ESC [ sequence (reset)
         {
           ESCFlag = 0;  
@@ -477,7 +476,7 @@ void main(void)
           }
           else if (inbyte == 0x09) // TAB  --  needed ??
           {
-            fputc_cons(0x07);  // BEEP-DEBUG
+            //fputc_cons(0x07);  // BEEP-DEBUG
             fputc_cons(inbyte);
 
           }        
@@ -488,6 +487,7 @@ void main(void)
           }
           else if (inbyte==0x0d)  // Carriage Return
           {  // could be left out as 0x0d triggers a new line if printed to screen
+            //fputc_cons(0x07);
             fputc_cons(inbyte);
             newline_attr();
 
@@ -521,8 +521,12 @@ void main(void)
         lastbyte=inbyte;
 
         //QUICK keyboard check if we are reading alot so we can interupt
-        //zx_border(INK_CYAN);  //DEBUG
-        //KeyReadMulti(0,2);  // Reading the keyboard here seemed to break in to ESC [ some times.
+        
+        if(ESCFlag == 0)
+        {
+          //zx_border(INK_CYAN);  //DEBUG
+          KeyReadMulti(0,1);  // 2 Reading the keyboard here seemed to break in to ESC [ some times.
+        }
 
       }while(++bytecount<rxbytes);
     }
