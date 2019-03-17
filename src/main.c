@@ -16,11 +16,13 @@
 
 //GLOBALS
 static unsigned char chkey, inbyte, lastbyte, bytecount;
-static unsigned char rxdata[18] ,rxbytes;  //  RXDATA -- 10[/] 20[/] 40[-] 80[x]
-static unsigned char txdata[20], txbytes;  //  TX DATA -- 20
+static unsigned char rxdata[18] ,rxbytes; //  RXDATA -- 10[/] 20[/] 40[-] 80[x]
+static unsigned char txdata[20], txbytes; //  TX DATA -- 20
+static unsigned char ESC_Num_String[4];   //  ESC code number string
+static uint8_t ESC_Num_String_Counter;    //  Counter for the ESC Code string
 
 static unsigned char *CursorAddr;
-static uint_fast8_t ExtendKeyFlag, CursorFlag, CursorMask, ESCFlag, MonoFlag;
+static uint_fast8_t ExtendKeyFlag, CursorFlag, CursorMask, ESCFlag, MonoFlag;  // to delete - ESCFlag -
 static int cursorX, cursorY;  
 
 static unsigned char row_attr, *attr;  //  newline_attr() and mono()
@@ -381,40 +383,127 @@ void Push_inbyte2screen(void)
     }
   }
 }
+
+void Protocol_Reset_All(void)
+{
+  
+  ESC_Code = False;
+  CSI_Code = False;
+  Custom_Code = False;
+  ESC_Num_String_Counter = sizeof(ESC_Num_String);
+  do
+  {
+    ESC_Num_String[ESC_Num_String_Counter] = NULL;
+  }while(--ESC_Num_String_Counter > 0);
+  
+}
+
 void Protocol(void)
 {
 
-  if (ESC_Code)
+  if (ESC_Code) // ESC
+  {// ESC
+    if (CSI_Code) // [
+    {// ESC [
+      if (Custom_Code) // ?
+      {// ESC [ ?
+        if(inbyte >= '0' && inbyte >= '9')
+        {// ESC [ "0-9"
+          if(ESC_Num_String_Counter<sizeof(ESC_Num_String))
   {
-    if (CSI_Code)
+            ESC_Num_String[ESC_Num_String_Counter] = inbyte;
+            ESC_Num_String_Counter++;
+          }
+          else
     {
-      if (Custom_Code)
-      {
-        
+            printf("!!!ESC_Num_String Buffer over flow!!!");
+          }  
+        }
+        else if(False)
+        {}
+        else //
+        {}
 
       }
-      else //not Custom
+      else
+      {// ESC [
+        if(inbyte == 0x3f) // ?
       {
-        if(inbyte == 0x3f)
-        {
           Custom_Code = True;
+          Push_inbyte2screen();
         }
+        else if(inbyte >= '0' && inbyte >= '9')
+        {// ESC [ "0-9"
+          if(ESC_Num_String_Counter<sizeof(ESC_Num_String))
+          {
+            ESC_Num_String[ESC_Num_String_Counter] = inbyte;
+            ESC_Num_String_Counter++;
+          }
+          else
+          {
+            printf("!!!ESC_Num_String Buffer over flow!!!");
+          }
+        
+      }
+        else if(inbyte == 'n')  // ESC [ # n -- Device Status Report
+        {
+          // Check the CSI number for action to perform
+          Protocol_Reset_All();
+          Push_inbyte2screen();
+        }
+        else if(inbyte == 'm')  // ESC [ # m -- Select Graphic Rendition
+      {
+          // Check the Text Attributes resolve clash
+          Push_inbyte2screen();
+          Protocol_Reset_All();
+        }
+        else // Condition for ESC [ "Unknown"
+        {
+          
+          Push_inbyte2screen();
+          Protocol_Reset_All();
+        }
+        
       }
     }
     else //no CSI
     {
-      if(inbyte == 0x5b)
+      if(inbyte == 0x5b) // [ CSI
       {
         CSI_Code = True;
+        Push_inbyte2screen();
       }
+      else if (False) 
+      {
+        // ESC CSI -
+      }
+      
+      else // Condition for ESC "Unknown"
+      {
+        Push_inbyte2screen();
+        Protocol_Reset_All();
+      }
+      
     }
   }
   else //no ESC
   {
-    if (inbyte == 0x1b)
+    if (inbyte == 0x1b) // ESC
     {
       ESC_Code = True;
+      Push_inbyte2screen();
     }
+    else if(False)
+    {
+      // Conditions for ESC "Unknown"
+      Push_inbyte2screen();
+      Protocol_Reset_All();
+    }
+    else // Just another charcter to show
+    {
+      Push_inbyte2screen();
+    }
+    
   }
 
 }
@@ -430,6 +519,8 @@ void main(void)
   ESC_Code=False;
   CSI_Code=False;
   Custom_Code=False;
+
+  ESC_Num_String_Counter=0;
 
   // quick initalise serial port
   rs232_params(RS_BAUD_9600|RS_STOP_1|RS_BITS_8,RS_PAR_NONE);
@@ -484,6 +575,7 @@ void main(void)
         ClearCursor();  // Blank characters wont over write the cursor if its showing
         //zx_border(INK_BLACK); //DEBUG-TIMING
         inbyte = rxdata[bytecount];
+        //Protocol();  // process inbyte
 
         if (inbyte == 0x1b) //Catch the start of ESC [  --  Need to stop Cursor movement to preserve the ESC [ sequence (drawing and deleting puts to the console)
         {
