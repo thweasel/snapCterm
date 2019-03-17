@@ -267,7 +267,7 @@ void newline_attr()  //ACTIVE
     }
 }
 
-void mono()  // MONO SCREEN MODE
+void mono()   //Sweep the screen with mono attribute
 {
     if(MonoFlag > 0 && MonoFlag < 8)
     {
@@ -689,7 +689,7 @@ void main(void)
       KeyReadMulti(10,30);   // 10,30
     }
 
-    if(MonoFlag != 0) {mono();}
+    if(MonoFlag != 0 && MonoFlag != zx_attr(23,31)) {mono();} // Mono flag set, if attr in corner dont match sweep the screen
 
   }
 
