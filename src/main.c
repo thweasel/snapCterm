@@ -42,6 +42,41 @@ _oemascii:
 #endasm
 
 
+void ESC_CSI_6n(void)  //if(inbyte == 0x6e && lastbyte == 0x36)  
+{//Report cursor possition -- ESC [ ROW ; COLUMN R  Row and column need to be as TEXT
+  char s[2];        
+
+  cursorY = wherey();
+  cursorX = wherex();
+
+  rs232_put(0x1b);          // ESC
+
+  rs232_put(0x5b);          // [           
+
+  if(cursorY/10!=0)
+  {
+    itoa(cursorY/10,s,10);
+    rs232_put(s[0]);        // # (10s)
+  }
+  itoa(cursorY%10,s,10);
+  rs232_put(s[0]);          // # (1s)
+
+  rs232_put(0x3b);          // ;           
+
+  if(cursorX/10!=0)         // # (10s)
+  {
+    itoa(cursorX/10,s,10);
+    rs232_put(s[0]);
+  }
+  itoa(cursorX%10,s,10);    // # (1s)
+  rs232_put(s[0]);
+
+  rs232_put('R');           // R
+
+  fputc_cons(inbyte);
+  ESCFlag = 0;
+}
+
 void keyboard_click(void)  //ACTIVE
 {//Thomas Cherryhomes key click
   unsigned char i,j;
