@@ -77,147 +77,6 @@ void ESC_CSI_6n(void)  //if(inbyte == 0x6e && lastbyte == 0x36)
   ESCFlag = 0;
 }
 
-void keyboard_click(void)  //ACTIVE
-{//Thomas Cherryhomes key click
-  unsigned char i,j;
-  for (i=0;i<=10;i++)
-  {
-      bit_click();
-      for (j=0;j<4;j++) {/*NOP*/}
-  }
-}
-
-void KeyReadMulti(unsigned char time_ms, unsigned char repeat)  //ACTIVE  --  TX loop needs work & more Key mappings
-{
-  txbytes = 0;
-  txdata[0]=NULL;
-  //zx_border(INK_YELLOW);  //  DEBUG-TIMING
- 
-  do
-  {
-    if(time_ms>0)
-    {
-      in_Pause(time_ms);
-    }
-
-    if (txbytes < sizeof(txdata))
-    {    
-      chkey = getk();
-      if (chkey != NULL)  //Key hit translations
-      {
-        keyboard_click();  
-        if      (ExtendKeyFlag == 0)  // Not extended mode
-        {
-          if      (chkey == 0x0E) {ExtendKeyFlag++;}                                  // Symbol shift condition
-          else if (chkey == 0x0C) {txdata[txbytes] = 0x08   ;txbytes = txbytes+1;}    // Key Back Space (0x0C Form feed > Back space)
-          else if (chkey == 0x0A) {txdata[txbytes] = 0x0D   ;txbytes = txbytes+1;}    // Key ENTER (0x0A NL line feed, new line > 0x13 Carriage Return)        
-          else                    {txdata[txbytes] = chkey  ;txbytes = txbytes+1;}    // UNCHANGED
-        }
-        else if (ExtendKeyFlag == 1)  // Level 1 extended mode - PC Keys
-        {
-          if      (chkey == 0x0E)   {ExtendKeyFlag=0;}                                                                                                            // Exit Extend modes      
-          else if (chkey == 'c')    {ExtendKeyFlag=2;}
-          else if (chkey == 'm')    {MonoFlag++; if(MonoFlag>7){ExtendKeyFlag=0;} mono();}  //  Need to flag this out not call the function                                                                                                           // CTRL > CTRL Extend mode
-          
-          else if (chkey == 't')    {txdata[txbytes] = 0x09; txbytes = txbytes+1;}                                                                                // TAB key
-          
-          else if (chkey == 'e')    {txdata[txbytes] = 0x1b; txbytes = txbytes+1; ExtendKeyFlag = 0;}                                                             // Escape key
-          
-          else if (chkey == 'u')    {txdata[txbytes] = 0x1b; txdata[txbytes+1] = 0x5b; txdata[txbytes+2] = '5'; txdata[txbytes+3] = '~'; txbytes = txbytes+4;}    // Page UP
-          else if (chkey == 'd')    {txdata[txbytes] = 0x1b; txdata[txbytes+1] = 0x5b; txdata[txbytes+2] = '6'; txdata[txbytes+3] = '~'; txbytes = txbytes+4;}    // Page DOWN
-          
-          
-          //CURSOR
-          else if (chkey == 0x08)   {txdata[txbytes] = 0x1b; txdata[txbytes+1] = 'O'; txdata[txbytes+2] = 'D'; txbytes = txbytes+3;}                              // Cursor key LEFT      
-          else if (chkey == 0x0a)   {txdata[txbytes] = 0x1b; txdata[txbytes+1] = 'O'; txdata[txbytes+2] = 'B'; txbytes = txbytes+3;}                              // Cursor key DOWN  -- Clash with ENTER
-          else if (chkey == 0x0b)   {txdata[txbytes] = 0x1b; txdata[txbytes+1] = 'O'; txdata[txbytes+2] = 'A'; txbytes = txbytes+3;}                              // Cursor key UP
-          else if (chkey == 0x09)   {txdata[txbytes] = 0x1b; txdata[txbytes+1] = 'O'; txdata[txbytes+2] = 'C'; txbytes = txbytes+3;}                              // Cursor key RIGHT
-
-          //ALT 
-          //F1 - F10 (F11 F12) ?
-          //Home
-          //End
-          //Insert
-          
-        }
-        else if (ExtendKeyFlag == 2)  // Level 2 extended mode - CTRL + Key combo
-        {
-          if        (chkey == 0x0E)                  {ExtendKeyFlag=0;}  // EXIT to normal mode
-          else if   (chkey == ' ')                   {txdata[txbytes] =  0; txbytes = txbytes + 1;}
-          else if   (chkey == 'a' || chkey == 'A')   {txdata[txbytes] =  1; txbytes = txbytes + 1;}
-          else if   (chkey == 'b' || chkey == 'B')   {txdata[txbytes] =  2; txbytes = txbytes + 1;}
-          else if   (chkey == 'c' || chkey == 'C')   {txdata[txbytes] =  3; txbytes = txbytes + 1;}
-          else if   (chkey == 'd' || chkey == 'D')   {txdata[txbytes] =  4; txbytes = txbytes + 1;}
-          else if   (chkey == 'e' || chkey == 'E')   {txdata[txbytes] =  5; txbytes = txbytes + 1;}
-          else if   (chkey == 'f' || chkey == 'F')   {txdata[txbytes] =  6; txbytes = txbytes + 1;}
-          else if   (chkey == 'g' || chkey == 'G')   {txdata[txbytes] =  7; txbytes = txbytes + 1;}
-          else if   (chkey == 'h' || chkey == 'H')   {txdata[txbytes] =  8; txbytes = txbytes + 1;}
-          else if   (chkey == 'i' || chkey == 'I')   {txdata[txbytes] =  9; txbytes = txbytes + 1;}
-          else if   (chkey == 'j' || chkey == 'J')   {txdata[txbytes] = 10; txbytes = txbytes + 1;}
-          else if   (chkey == 'k' || chkey == 'K')   {txdata[txbytes] = 11; txbytes = txbytes + 1;}
-          else if   (chkey == 'l' || chkey == 'L')   {txdata[txbytes] = 12; txbytes = txbytes + 1;}
-          else if   (chkey == 'm' || chkey == 'M')   {txdata[txbytes] = 13; txbytes = txbytes + 1;}
-          else if   (chkey == 'n' || chkey == 'N')   {txdata[txbytes] = 14; txbytes = txbytes + 1;}
-          else if   (chkey == 'o' || chkey == 'O')   {txdata[txbytes] = 15; txbytes = txbytes + 1;}
-          else if   (chkey == 'p' || chkey == 'P')   {txdata[txbytes] = 16; txbytes = txbytes + 1;}
-          else if   (chkey == 'q' || chkey == 'Q')   {txdata[txbytes] = 17; txbytes = txbytes + 1;}
-          else if   (chkey == 'r' || chkey == 'R')   {txdata[txbytes] = 18; txbytes = txbytes + 1;}
-          else if   (chkey == 's' || chkey == 'S')   {txdata[txbytes] = 19; txbytes = txbytes + 1;}
-          else if   (chkey == 't' || chkey == 'T')   {txdata[txbytes] = 20; txbytes = txbytes + 1;}
-          else if   (chkey == 'u' || chkey == 'U')   {txdata[txbytes] = 21; txbytes = txbytes + 1;}
-          else if   (chkey == 'v' || chkey == 'V')   {txdata[txbytes] = 22; txbytes = txbytes + 1;}
-          else if   (chkey == 'w' || chkey == 'W')   {txdata[txbytes] = 23; txbytes = txbytes + 1;}
-          else if   (chkey == 'x' || chkey == 'X')   {txdata[txbytes] = 24; txbytes = txbytes + 1;}
-          else if   (chkey == 'y' || chkey == 'Y')   {txdata[txbytes] = 25; txbytes = txbytes + 1;}
-          else if   (chkey == 'z' || chkey == 'Z')   {txdata[txbytes] = 26; txbytes = txbytes + 1;}
-          //else if   (chkey == '')   {;}
-        }
-        else  // RESET  --  Can not happen?
-        {
-          ExtendKeyFlag = 0;
-          printf("!!!PANIC!!! - KeyReadMulti -");
-        }
-      }
-
-      switch(ExtendKeyFlag)
-      {
-        case 0 :
-          zx_border(INK_BLACK);
-        break;
-        case 1 :
-          zx_border(INK_GREEN);
-        break;
-        case 2 :
-          zx_border(INK_CYAN);
-        break;
-        default :
-          zx_border(INK_MAGENTA);
-          ExtendKeyFlag=0;
-        break;
-      }
-
-      chkey = NULL;
-    }
-    else 
-    {
-      zx_border(INK_RED);
-      repeat = 1;
-    }    
-  }while(--repeat!=0);
-
-  //zx_border(INK_WHITE);  //DEBUG-TIMING
-  if(txbytes>0)
-  {
-    //zx_border(INK_YELLOW);  //DEBUG-TIMING
-    bytecount = 0;
-    do
-    {
-      rs232_put(txdata[bytecount]);
-    }while(++bytecount<txbytes);
-  }
-  //zx_border(INK_BLACK);  //DEBUG-TIMING
-}
-
 void DrawCursor(void)  // Version 2
 {
   cursorX = wherex();
@@ -462,6 +321,147 @@ void Protocol(void)
     
   }
 
+}
+
+void keyboard_click(void)  //ACTIVE
+{//Thomas Cherryhomes key click
+  unsigned char i,j;
+  for (i=0;i<=10;i++)
+  {
+      bit_click();
+      for (j=0;j<4;j++) {/*NOP*/}
+  }
+}
+
+void KeyReadMulti(unsigned char time_ms, unsigned char repeat)  //ACTIVE  --  TX loop needs work & more Key mappings
+{
+  txbytes = 0;
+  txdata[0]=NULL;
+  //zx_border(INK_YELLOW);  //  DEBUG-TIMING
+ 
+  do
+  {
+    if(time_ms>0)
+    {
+      in_Pause(time_ms);
+    }
+
+    if (txbytes < sizeof(txdata))
+    {    
+      chkey = getk();
+      if (chkey != NULL)  //Key hit translations
+      {
+        keyboard_click();  
+        if      (ExtendKeyFlag == 0)  // Not extended mode
+        {
+          if      (chkey == 0x0E) {ExtendKeyFlag++;}                                  // Symbol shift condition
+          else if (chkey == 0x0C) {txdata[txbytes] = 0x08   ;txbytes = txbytes+1;}    // Key Back Space (0x0C Form feed > Back space)
+          else if (chkey == 0x0A) {txdata[txbytes] = 0x0D   ;txbytes = txbytes+1;}    // Key ENTER (0x0A NL line feed, new line > 0x13 Carriage Return)        
+          else                    {txdata[txbytes] = chkey  ;txbytes = txbytes+1;}    // UNCHANGED
+        }
+        else if (ExtendKeyFlag == 1)  // Level 1 extended mode - PC Keys
+        {
+          if      (chkey == 0x0E)   {ExtendKeyFlag=0;}                                                                                                            // Exit Extend modes      
+          else if (chkey == 'c')    {ExtendKeyFlag=2;}
+          else if (chkey == 'm')    {MonoFlag++; if(MonoFlag>7){ExtendKeyFlag=0;} mono();}  //  Need to flag this out not call the function                                                                                                           // CTRL > CTRL Extend mode
+          
+          else if (chkey == 't')    {txdata[txbytes] = 0x09; txbytes = txbytes+1;}                                                                                // TAB key
+          
+          else if (chkey == 'e')    {txdata[txbytes] = 0x1b; txbytes = txbytes+1; ExtendKeyFlag = 0;}                                                             // Escape key
+          
+          else if (chkey == 'u')    {txdata[txbytes] = 0x1b; txdata[txbytes+1] = 0x5b; txdata[txbytes+2] = '5'; txdata[txbytes+3] = '~'; txbytes = txbytes+4;}    // Page UP
+          else if (chkey == 'd')    {txdata[txbytes] = 0x1b; txdata[txbytes+1] = 0x5b; txdata[txbytes+2] = '6'; txdata[txbytes+3] = '~'; txbytes = txbytes+4;}    // Page DOWN
+          
+          
+          //CURSOR
+          else if (chkey == 0x08)   {txdata[txbytes] = 0x1b; txdata[txbytes+1] = 'O'; txdata[txbytes+2] = 'D'; txbytes = txbytes+3;}                              // Cursor key LEFT      
+          else if (chkey == 0x0a)   {txdata[txbytes] = 0x1b; txdata[txbytes+1] = 'O'; txdata[txbytes+2] = 'B'; txbytes = txbytes+3;}                              // Cursor key DOWN  -- Clash with ENTER
+          else if (chkey == 0x0b)   {txdata[txbytes] = 0x1b; txdata[txbytes+1] = 'O'; txdata[txbytes+2] = 'A'; txbytes = txbytes+3;}                              // Cursor key UP
+          else if (chkey == 0x09)   {txdata[txbytes] = 0x1b; txdata[txbytes+1] = 'O'; txdata[txbytes+2] = 'C'; txbytes = txbytes+3;}                              // Cursor key RIGHT
+
+          //ALT 
+          //F1 - F10 (F11 F12) ?
+          //Home
+          //End
+          //Insert
+          
+        }
+        else if (ExtendKeyFlag == 2)  // Level 2 extended mode - CTRL + Key combo
+        {
+          if        (chkey == 0x0E)                  {ExtendKeyFlag=0;}  // EXIT to normal mode
+          else if   (chkey == ' ')                   {txdata[txbytes] =  0; txbytes = txbytes + 1;}
+          else if   (chkey == 'a' || chkey == 'A')   {txdata[txbytes] =  1; txbytes = txbytes + 1;}
+          else if   (chkey == 'b' || chkey == 'B')   {txdata[txbytes] =  2; txbytes = txbytes + 1;}
+          else if   (chkey == 'c' || chkey == 'C')   {txdata[txbytes] =  3; txbytes = txbytes + 1;}
+          else if   (chkey == 'd' || chkey == 'D')   {txdata[txbytes] =  4; txbytes = txbytes + 1;}
+          else if   (chkey == 'e' || chkey == 'E')   {txdata[txbytes] =  5; txbytes = txbytes + 1;}
+          else if   (chkey == 'f' || chkey == 'F')   {txdata[txbytes] =  6; txbytes = txbytes + 1;}
+          else if   (chkey == 'g' || chkey == 'G')   {txdata[txbytes] =  7; txbytes = txbytes + 1;}
+          else if   (chkey == 'h' || chkey == 'H')   {txdata[txbytes] =  8; txbytes = txbytes + 1;}
+          else if   (chkey == 'i' || chkey == 'I')   {txdata[txbytes] =  9; txbytes = txbytes + 1;}
+          else if   (chkey == 'j' || chkey == 'J')   {txdata[txbytes] = 10; txbytes = txbytes + 1;}
+          else if   (chkey == 'k' || chkey == 'K')   {txdata[txbytes] = 11; txbytes = txbytes + 1;}
+          else if   (chkey == 'l' || chkey == 'L')   {txdata[txbytes] = 12; txbytes = txbytes + 1;}
+          else if   (chkey == 'm' || chkey == 'M')   {txdata[txbytes] = 13; txbytes = txbytes + 1;}
+          else if   (chkey == 'n' || chkey == 'N')   {txdata[txbytes] = 14; txbytes = txbytes + 1;}
+          else if   (chkey == 'o' || chkey == 'O')   {txdata[txbytes] = 15; txbytes = txbytes + 1;}
+          else if   (chkey == 'p' || chkey == 'P')   {txdata[txbytes] = 16; txbytes = txbytes + 1;}
+          else if   (chkey == 'q' || chkey == 'Q')   {txdata[txbytes] = 17; txbytes = txbytes + 1;}
+          else if   (chkey == 'r' || chkey == 'R')   {txdata[txbytes] = 18; txbytes = txbytes + 1;}
+          else if   (chkey == 's' || chkey == 'S')   {txdata[txbytes] = 19; txbytes = txbytes + 1;}
+          else if   (chkey == 't' || chkey == 'T')   {txdata[txbytes] = 20; txbytes = txbytes + 1;}
+          else if   (chkey == 'u' || chkey == 'U')   {txdata[txbytes] = 21; txbytes = txbytes + 1;}
+          else if   (chkey == 'v' || chkey == 'V')   {txdata[txbytes] = 22; txbytes = txbytes + 1;}
+          else if   (chkey == 'w' || chkey == 'W')   {txdata[txbytes] = 23; txbytes = txbytes + 1;}
+          else if   (chkey == 'x' || chkey == 'X')   {txdata[txbytes] = 24; txbytes = txbytes + 1;}
+          else if   (chkey == 'y' || chkey == 'Y')   {txdata[txbytes] = 25; txbytes = txbytes + 1;}
+          else if   (chkey == 'z' || chkey == 'Z')   {txdata[txbytes] = 26; txbytes = txbytes + 1;}
+          //else if   (chkey == '')   {;}
+        }
+        else  // RESET  --  Can not happen?
+        {
+          ExtendKeyFlag = 0;
+          printf("!!!PANIC!!! - KeyReadMulti -");
+        }
+      }
+
+      switch(ExtendKeyFlag)
+      {
+        case 0 :
+          zx_border(INK_BLACK);
+        break;
+        case 1 :
+          zx_border(INK_GREEN);
+        break;
+        case 2 :
+          zx_border(INK_CYAN);
+        break;
+        default :
+          zx_border(INK_MAGENTA);
+          ExtendKeyFlag=0;
+        break;
+      }
+
+      chkey = NULL;
+    }
+    else 
+    {
+      zx_border(INK_RED);
+      repeat = 1;
+    }    
+  }while(--repeat!=0);
+
+  //zx_border(INK_WHITE);  //DEBUG-TIMING
+  if(txbytes>0)
+  {
+    //zx_border(INK_YELLOW);  //DEBUG-TIMING
+    bytecount = 0;
+    do
+    {
+      rs232_put(txdata[bytecount]);
+    }while(++bytecount<txbytes);
+  }
+  //zx_border(INK_BLACK);  //DEBUG-TIMING
 }
 
 void demotitle(void)
