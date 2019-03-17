@@ -360,6 +360,27 @@ void title(void)
   }while(--titlescroll!=0);
 }
 
+void Push_inbyte2screen(void)
+{
+  if (inbyte != 0x0d) // We ignore Line Feeds
+  {
+    fputc_cons(inbyte);
+    if (MonoFlag > 0)
+    {
+      if (7 != zx_attr(23,31))  // FIX SCROLL ISSUE
+      {
+        newline_attr();
+      }
+    }
+    else
+    {
+      if (MonoFlag != zx_attr(23,31))  // FIX SCROLL ISSUE
+      {
+        newline_attr();
+      }
+    }
+  }
+}
 void Protocol(void)
 {
 
