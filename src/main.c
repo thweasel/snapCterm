@@ -10,6 +10,7 @@
 #include <input.h>  //#include <input/input_zx.h>
 #include <string.h>
 #include <sound.h>  // sound for keyboard click
+//#include <sound/bit.h>
 #include <stdlib.h>
 //#include <ulaplus.h>  //ULA Plus support
 
@@ -215,43 +216,48 @@ void Protocol_Reset_All(void)
 
 void Protocol(void)
 {
-
-  if (ESC_Code) // ESC
-  {// ESC
-    if (CSI_Code) // [
+  if (ESC_Code) // 0x1b ESC
+  {// ESC    
+    if (CSI_Code) // 0x5b [ (CSI)
     {// ESC [
-      if (Custom_Code) // ?
-      {// ESC [ ?
+      if (Custom_Code) // 0x3b ?
+      {//   ESC [ ?
         if(inbyte >= '0' && inbyte >= '9')
-        {// ESC [ "0-9"
+        {// ESC [ ? "0-9"
           if(ESC_Num_String_Counter<sizeof(ESC_Num_String))
           {
             ESC_Num_String[ESC_Num_String_Counter] = inbyte;
+            Push_inbyte2screen();
             ESC_Num_String_Counter++;
+
           }
           else
           {
             printf("!!!ESC_Num_String Buffer over flow!!!");
           }  
         }
-        else if(False)
-        {}
-        else //
-        {}
+        else
+        {// ESC [ ? "Unknown"
+          Push_inbyte2screen();
+          Protocol_Reset_All();
+          //bit_beep(100,600);     // DEBUG -- BEEP CODE
+          
+        }
 
       }
       else
-      {// ESC [
-        if(inbyte == 0x3f) // ?
-        {
+      {//   ESC [  
+        if(inbyte == 0x3f) 
+        {// ESC [ ? -- Custom Code
           Custom_Code = True;
           Push_inbyte2screen();
         }
-        else if(inbyte >= '0' && inbyte >= '9')
+        else if(inbyte >= '0' && inbyte <= '9') 
         {// ESC [ "0-9"
           if(ESC_Num_String_Counter<sizeof(ESC_Num_String))
           {
             ESC_Num_String[ESC_Num_String_Counter] = inbyte;
+            Push_inbyte2screen();
             ESC_Num_String_Counter++;
           }
           else
@@ -260,45 +266,40 @@ void Protocol(void)
           }
           
         }
-        else if(inbyte == 'n')  // ESC [ # n -- Device Status Report
-        {
+        else if(inbyte == 'n')  
+        {// ESC [ # n -- Device Status Report
           // Check the CSI number for action to perform
           Protocol_Reset_All();
           Push_inbyte2screen();
         }
-        else if(inbyte == 'm')  // ESC [ # m -- Select Graphic Rendition
-        {
+        else if(inbyte == 'm')  
+        {// ESC [ # m -- Select Graphic Rendition
           // Check the Text Attributes resolve clash
           Push_inbyte2screen();
           Protocol_Reset_All();
         }
-        else // Condition for ESC [ "Unknown"
-        {
-          
+        else 
+        {// ESC [ "Unknown"
           Push_inbyte2screen();
           Protocol_Reset_All();
+          //bit_beep(100,400);     // DEBUG -- BEEP CODE
         }
-        
       }
     }
-    else //no CSI
-    {
-      if(inbyte == 0x5b) // [ CSI
-      {
+    else 
+    {//   ESC
+      if(inbyte == 0x5b) 
+      {// ESC [ (CSI)
         CSI_Code = True;
         Push_inbyte2screen();
-      }
-      else if (False) 
-      {
-        // ESC CSI -
-      }
-      
-      else // Condition for ESC "Unknown"
-      {
+      }   
+      else 
+      {// ESC "Unknown"
         Push_inbyte2screen();
         Protocol_Reset_All();
+        //printf("\07");
+        //bit_beep(100,200);        // DEBUG -- BEEP CODE
       }
-      
     }
   }
   else //no ESC
@@ -307,12 +308,6 @@ void Protocol(void)
     {
       ESC_Code = True;
       Push_inbyte2screen();
-    }
-    else if(False)
-    {
-      // Conditions for ESC "Unknown"
-      Push_inbyte2screen();
-      Protocol_Reset_All();
     }
     else // Just another charcter to show
     {
@@ -568,7 +563,7 @@ void main(void)
   cprintf("\033[37;40m");  // esc [ ESC SEQUENCE (Foreground)White;(Background)Black m (to terminate)
  
   //title();  //  -- TITLE --  
-  demotitle();
+  //demotitle();
 
   while(1)  // MAIN PROGRAM LOOP
   {
@@ -608,8 +603,8 @@ void main(void)
         ClearCursor();  // Blank characters wont over write the cursor if its showing
         //zx_border(INK_BLACK); //DEBUG-TIMING
         inbyte = rxdata[bytecount];
-        //Protocol();  // process inbyte
-
+        Protocol();  // process inbyte
+/*
         if (inbyte == 0x1b) //Catch the start of ESC [  --  Need to stop Cursor movement to preserve the ESC [ sequence (drawing and deleting puts to the console)
         {
           ESCFlag = 1;  // no cursor moves
@@ -680,7 +675,7 @@ void main(void)
             newline_attr();
 
           }
-          else if (inbyte==0x0a)  // Line Feed
+          else if (inbyte==0x0a)  // Line Feed  -- no nothing
           { // DO NOTHING
             //fputc_cons(inbyte);
             //newline_attr();   
@@ -715,7 +710,7 @@ void main(void)
           //zx_border(INK_CYAN);  //DEBUG
           KeyReadMulti(0,1);  // 2 Reading the keyboard here seemed to break in to ESC [ some times.
         }
-
+*/
       }while(++bytecount<rxbytes);
     }
     else //no incoming data check keyboard

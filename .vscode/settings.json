@@ -9,6 +9,8 @@
         "spectrum.h": "c",
         "zx.h": "c",
         "arch.h": "c",
-        "types.h": "c"
+        "types.h": "c",
+        "sound.h": "c",
+        "bit.h": "c"
     }
 }
