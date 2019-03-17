@@ -33,7 +33,6 @@ static bool_t ESC_Code, CSI_Code, Custom_Code;
 //Font stuff
 #asm  
 SECTION data_user ;
-
 PUBLIC _oemascii
 _oemascii:
       //Files must be loaded in order of lowest value to highest
@@ -410,12 +409,12 @@ void Protocol(void)
         if(inbyte >= '0' && inbyte >= '9')
         {// ESC [ "0-9"
           if(ESC_Num_String_Counter<sizeof(ESC_Num_String))
-  {
+          {
             ESC_Num_String[ESC_Num_String_Counter] = inbyte;
             ESC_Num_String_Counter++;
           }
           else
-    {
+          {
             printf("!!!ESC_Num_String Buffer over flow!!!");
           }  
         }
@@ -428,7 +427,7 @@ void Protocol(void)
       else
       {// ESC [
         if(inbyte == 0x3f) // ?
-      {
+        {
           Custom_Code = True;
           Push_inbyte2screen();
         }
@@ -443,8 +442,8 @@ void Protocol(void)
           {
             printf("!!!ESC_Num_String Buffer over flow!!!");
           }
-        
-      }
+          
+        }
         else if(inbyte == 'n')  // ESC [ # n -- Device Status Report
         {
           // Check the CSI number for action to perform
@@ -452,7 +451,7 @@ void Protocol(void)
           Push_inbyte2screen();
         }
         else if(inbyte == 'm')  // ESC [ # m -- Select Graphic Rendition
-      {
+        {
           // Check the Text Attributes resolve clash
           Push_inbyte2screen();
           Protocol_Reset_All();
@@ -542,12 +541,12 @@ void main(void)
 
     DrawCursor();
 
-    //RXDATA  --  move to function?got
+    //RXDATA  --  move to function?
 
-    if(rs232_get(&inbyte)!=RS_ERR_NO_DATA) //any incoming data capture and print
+    if(rs232_get(&inbyte)!=RS_ERR_NO_DATA)  //any incoming data capture and print
     {
-      //zx_border(INK_WHITE);  //DEBUG-TIMIgotNG
-      rxdata[0]=inbyte;         //Buffer thgote first character
+      //zx_border(INK_WHITE);  //DEBUG-TIMING
+      rxdata[0]=inbyte;         //Buffer the first character
       rxbytes = sizeof(rxdata);
 
       bytecount=1;
@@ -571,7 +570,7 @@ void main(void)
       
       bytecount=0;
       do
-      {
+      {       
         ClearCursor();  // Blank characters wont over write the cursor if its showing
         //zx_border(INK_BLACK); //DEBUG-TIMING
         inbyte = rxdata[bytecount];
