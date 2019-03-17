@@ -42,47 +42,6 @@ _oemascii:
 #endasm
 
 
-void newline_attr()  //ACTIVE
-{//Allen Albright's method  -- Extended to cover MONO mode
-    row_attr = 23;
-    attr = zx_cyx2aaddr(23,31);
-    if(MonoFlag > 0 && MonoFlag < 8)
-    {
-      do
-      {
-        memset(attr - 31, MonoFlag, 32);
-        attr = zx_aaddrcup(attr);
-      }
-      while (row_attr-- != 0);
-    }
-    else 
-    {
-      do
-      {
-        if (7 != *attr)
-        memset(attr - 31, 7, 32);
-        attr = zx_aaddrcup(attr);
-      }
-      while (row_attr-- != 0);
-    }
-}
-
-void mono()  // MONO SCREEN MODE
-{
-    if(MonoFlag > 0 && MonoFlag < 8)
-    {
-      row_attr = 23;
-      attr = zx_cyx2aaddr(23,31);
-      do
-      {
-          memset(attr - 31, MonoFlag, 32);
-          attr = zx_aaddrcup(attr);
-      }
-      while (row_attr-- != 0);
-    }
-    else {MonoFlag=0;}
-}
-
 void keyboard_click(void)  //ACTIVE
 {//Thomas Cherryhomes key click
   unsigned char i,j;
@@ -92,66 +51,6 @@ void keyboard_click(void)  //ACTIVE
       for (j=0;j<4;j++) {/*NOP*/}
   }
 }
-
-void DrawCursor(void)  // Version 2
-{
-  cursorX = wherex();
-  cursorY = wherey();
-
-  if    (CursorFlag==0) {CursorFlag=1;}
-  else                  {CursorFlag=0;}
-
-  if (cursorX <79)
-  {
-	  CursorMask = cursorX%8;  
-	  switch (CursorMask)
-	  {
-		  case 0 :
-		  CursorAddr = zx_pxy2saddr(cursorX*3, cursorY*8+7,255);
-		  *CursorAddr= *CursorAddr ^ (224);	   
-		  break;
-		  case 1 :
-		  CursorAddr=zx_pxy2saddr(cursorX*3, cursorY*8+7,255);
-		  *CursorAddr= *CursorAddr ^ (28);
-		  break;
-		  case 2 :  //SPLIT over 2 bytes
-		  CursorAddr=zx_pxy2saddr(cursorX*3, cursorY*8+7,255);
-		  *CursorAddr= *CursorAddr ^ (3);
-		  CursorAddr=zx_pxy2saddr(cursorX*3+3, cursorY*8+7,255);
-		  *CursorAddr= *CursorAddr ^ (128);
-		  break;
-		  case 3 :
-		  CursorAddr=zx_pxy2saddr(cursorX*3, cursorY*8+7,255);
-		  *CursorAddr= *CursorAddr ^ (112);
-		  break;
-		  case 4 :
-		  CursorAddr=zx_pxy2saddr(cursorX*3, cursorY*8+7,255);
-		  *CursorAddr= *CursorAddr ^ (14);
-		  break;
-		  case 5 :  //SPLIT over 2 bytes
-		  CursorAddr=zx_pxy2saddr(cursorX*3, cursorY*8+7,255);
-		  *CursorAddr= *CursorAddr ^ (1);
-		  CursorAddr=zx_pxy2saddr(cursorX*3+3, cursorY*8+7,255);
-		  *CursorAddr= *CursorAddr ^ (192);
-		  break;
-		  case 6 :
-		  CursorAddr=zx_pxy2saddr(cursorX*3, cursorY*8+7,255);
-		  *CursorAddr= *CursorAddr ^ (56);
-		  break;
-		  case 7 :
-		  CursorAddr=zx_pxy2saddr(cursorX*3, cursorY*8+7,255);
-		  *CursorAddr= *CursorAddr ^ (7);
-		  break;		  
-		  }
-  }
-}
-
-
-void ClearCursor(void)  // Version 2  --  Call this when not putting none printing characters on the screen
-{
-  if(CursorFlag==1) {DrawCursor();}
-}
-
 
 void KeyReadMulti(unsigned char time_ms, unsigned char repeat)  //ACTIVE  --  TX loop needs work & more Key mappings
 {
@@ -284,81 +183,104 @@ void KeyReadMulti(unsigned char time_ms, unsigned char repeat)  //ACTIVE  --  TX
   //zx_border(INK_BLACK);  //DEBUG-TIMING
 }
 
-void demotitle(void)
-{ 
-  char titlescroll = 24;
-  
-  for (uint8_t z=0;z<10;++z) {DrawCursor();  in_Pause(50);}
-  printf("\033[32;40m");
-  printf("[\373].80 columns  [\373].ASCII oem set  [\373].ANSI  [\373].colour clash   \n\n");
-  for (uint8_t z=0;z<10;++z) {DrawCursor();  in_Pause(100);}  
-  printf("Terminal ready... ");
-  for (uint8_t z=0;z<10;++z) {DrawCursor();  in_Pause(100);}
-  printf("\07"); in_Pause(50);
-  ClearCursor();
-  printf("\033[37;40m");
-  printf("\n\033[1m");
-  printf("                                     _____  _                          \r");
-  printf("                                    /  __ \\| |                         \r");
-  printf("           ___  _ __    __ _  _ __  | /  \\/| |_  ___  _ __  _ __ ___   \r");
-  printf("          / __|| '_ \\  / _` || '_ \\ | |    | __|/ _ \\| '__|| '_ ` _ \\  \r\033[0m");
-  printf("          \\__ \\| | | || (_| || |_) || \\__/\\| |_|  __/| |   | | | | | | \r");
-  printf("          |___/|_| |_| \\__,_|| .__/  \\____/ \\__|\\___||_|   |_| |_| |_| \r");
-  printf("                             | |                                       \r");
-  printf("                             |_|                                       \r");
-  printf("\n");
-  printf("\033[1m\033[31;40m");
-  printf("                         !  -  PRE - ALPHA - VERSION - !       \n\n\n");
-  printf("\033[1m\033[33;40m");
-  printf("    BY: Owen Reynolds 2018                      \n\n");
-  printf("CREDIT: Thomas Cherryhomes @ IRATA.ONLINE       \n\n");
-  printf("\033[1m\033[37;40m");
-  printf("                        Built using Z88DK - C compiler for Z80s         \n\n");
-  printf("\033[1m\033[34;40m");
-  printf("               - Join us on Facebook - Z88DK ZX Spectrum user group -   \n\n\033[1m\033[37;40m");
-  printf("                        -\\/\\/\\- ANY KEY TO CONTINUE -/\\/\\/- \033[37;40m");
-  in_WaitForKey();
-  do
+void DrawCursor(void)  // Version 2
+{
+  cursorX = wherex();
+  cursorY = wherey();
+
+  if    (CursorFlag==0) {CursorFlag=1;}
+  else                  {CursorFlag=0;}
+
+  if (cursorX <79)
   {
-    printf("\r");  
-    newline_attr();
-  }while(--titlescroll!=0);
+	  CursorMask = cursorX%8;  
+	  switch (CursorMask)
+	  {
+		  case 0 :
+		  CursorAddr = zx_pxy2saddr(cursorX*3, cursorY*8+7,255);
+		  *CursorAddr= *CursorAddr ^ (224);	   
+		  break;
+		  case 1 :
+		  CursorAddr=zx_pxy2saddr(cursorX*3, cursorY*8+7,255);
+		  *CursorAddr= *CursorAddr ^ (28);
+		  break;
+		  case 2 :  //SPLIT over 2 bytes
+		  CursorAddr=zx_pxy2saddr(cursorX*3, cursorY*8+7,255);
+		  *CursorAddr= *CursorAddr ^ (3);
+		  CursorAddr=zx_pxy2saddr(cursorX*3+3, cursorY*8+7,255);
+		  *CursorAddr= *CursorAddr ^ (128);
+		  break;
+		  case 3 :
+		  CursorAddr=zx_pxy2saddr(cursorX*3, cursorY*8+7,255);
+		  *CursorAddr= *CursorAddr ^ (112);
+		  break;
+		  case 4 :
+		  CursorAddr=zx_pxy2saddr(cursorX*3, cursorY*8+7,255);
+		  *CursorAddr= *CursorAddr ^ (14);
+		  break;
+		  case 5 :  //SPLIT over 2 bytes
+		  CursorAddr=zx_pxy2saddr(cursorX*3, cursorY*8+7,255);
+		  *CursorAddr= *CursorAddr ^ (1);
+		  CursorAddr=zx_pxy2saddr(cursorX*3+3, cursorY*8+7,255);
+		  *CursorAddr= *CursorAddr ^ (192);
+		  break;
+		  case 6 :
+		  CursorAddr=zx_pxy2saddr(cursorX*3, cursorY*8+7,255);
+		  *CursorAddr= *CursorAddr ^ (56);
+		  break;
+		  case 7 :
+		  CursorAddr=zx_pxy2saddr(cursorX*3, cursorY*8+7,255);
+		  *CursorAddr= *CursorAddr ^ (7);
+		  break;		  
+		  }
+  }
 }
 
-void title(void)
-{ 
-  char titlescroll = 24;
-  printf("\033[32;40m");
-  printf("[\373].80 columns  [\373].ASCII oem set  [\373].ANSI  [\373].colour clash   \n\n");
-  printf("Terminal ready... ");
-  printf("\033[37;40m");
-  printf("\n\033[1m");
-  printf("                                     _____  _                          \r");
-  printf("                                    /  __ \\| |                         \r");
-  printf("           ___  _ __    __ _  _ __  | /  \\/| |_  ___  _ __  _ __ ___   \r");
-  printf("          / __|| '_ \\  / _` || '_ \\ | |    | __|/ _ \\| '__|| '_ ` _ \\  \r\033[0m");
-  printf("          \\__ \\| | | || (_| || |_) || \\__/\\| |_|  __/| |   | | | | | | \r");
-  printf("          |___/|_| |_| \\__,_|| .__/  \\____/ \\__|\\___||_|   |_| |_| |_| \r");
-  printf("                             | |                                       \r");
-  printf("                             |_|                                       \r");
-  printf("\n");
-  printf("\033[1m\033[31;40m");
-  printf("                         !  -  PRE - ALPHA - VERSION - !       \n\n\n");
-  printf("\033[1m\033[33;40m");
-  printf("    BY: Owen Reynolds 2018                      \n\n");
-  printf("CREDIT: Thomas Cherryhomes @ IRATA.ONLINE       \n\n");
-  printf("\033[1m\033[37;40m");
-  printf("                        Built using Z88DK - C compiler for Z80s         \n\n");
-  printf("\033[1m\033[34;40m");
-  printf("               - Join us on Facebook - Z88DK ZX Spectrum user group -   \n\n\033[1m\033[37;40m");
-  printf("                        -\\/\\/\\- ANY KEY TO CONTINUE -/\\/\\/- \033[37;40m");
+void ClearCursor(void)  // Version 2  --  Call this when not putting none printing characters on the screen
+{
+  if(CursorFlag==1) {DrawCursor();}
+}
 
-  in_WaitForKey();
-  do
-  {
-    printf("\r");  
-    newline_attr();
-  }while(--titlescroll!=0);
+void newline_attr()  //ACTIVE
+{//Allen Albright's method  -- Extended to cover MONO mode
+    row_attr = 23;
+    attr = zx_cyx2aaddr(23,31);
+    //if(MonoFlag > 0 && MonoFlag < 8)
+    if(MonoFlag != 0)  // Quick but loose
+    {
+      do
+      {
+        memset(attr - 31, MonoFlag, 32);
+        attr = zx_aaddrcup(attr);
+      }
+      while (row_attr-- != 0);
+    }
+    else 
+    {
+      do
+      {
+        if (7 != *attr)
+        memset(attr - 31, 7, 32);
+        attr = zx_aaddrcup(attr);
+      }
+      while (row_attr-- != 0);
+    }
+}
+
+void mono()  // MONO SCREEN MODE
+{
+    if(MonoFlag > 0 && MonoFlag < 8)
+    {
+      row_attr = 23;
+      attr = zx_cyx2aaddr(23,31);
+      do
+      {
+          memset(attr - 31, MonoFlag, 32);
+          attr = zx_aaddrcup(attr);
+      }
+      while (row_attr-- != 0);
+    }
+    else {MonoFlag=0;}
 }
 
 void Push_inbyte2screen(void)
@@ -505,6 +427,83 @@ void Protocol(void)
     
   }
 
+}
+
+void demotitle(void)
+{ 
+  char titlescroll = 24;
+  
+  for (uint8_t z=0;z<10;++z) {DrawCursor();  in_Pause(50);}
+  printf("\033[32;40m");
+  printf("[\373].80 columns  [\373].ASCII oem set  [\373].ANSI  [\373].colour clash   \n\n");
+  for (uint8_t z=0;z<10;++z) {DrawCursor();  in_Pause(100);}  
+  printf("Terminal ready... ");
+  for (uint8_t z=0;z<10;++z) {DrawCursor();  in_Pause(100);}
+  printf("\07"); in_Pause(50);
+  ClearCursor();
+  printf("\033[37;40m");
+  printf("\n\033[1m");
+  printf("                                     _____  _                          \r");
+  printf("                                    /  __ \\| |                         \r");
+  printf("           ___  _ __    __ _  _ __  | /  \\/| |_  ___  _ __  _ __ ___   \r");
+  printf("          / __|| '_ \\  / _` || '_ \\ | |    | __|/ _ \\| '__|| '_ ` _ \\  \r\033[0m");
+  printf("          \\__ \\| | | || (_| || |_) || \\__/\\| |_|  __/| |   | | | | | | \r");
+  printf("          |___/|_| |_| \\__,_|| .__/  \\____/ \\__|\\___||_|   |_| |_| |_| \r");
+  printf("                             | |                                       \r");
+  printf("                             |_|                                       \r");
+  printf("\n");
+  printf("\033[1m\033[31;40m");
+  printf("                         !  -  PRE - ALPHA - VERSION - !       \n\n\n");
+  printf("\033[1m\033[33;40m");
+  printf("    BY: Owen Reynolds 2018                      \n\n");
+  printf("CREDIT: Thomas Cherryhomes @ IRATA.ONLINE       \n\n");
+  printf("\033[1m\033[37;40m");
+  printf("                        Built using Z88DK - C compiler for Z80s         \n\n");
+  printf("\033[1m\033[34;40m");
+  printf("               - Join us on Facebook - Z88DK ZX Spectrum user group -   \n\n\033[1m\033[37;40m");
+  printf("                        -\\/\\/\\- ANY KEY TO CONTINUE -/\\/\\/- \033[37;40m");
+  in_WaitForKey();
+  do
+  {
+    printf("\r");  
+    newline_attr();
+  }while(--titlescroll!=0);
+}
+
+void title(void)
+{ 
+  char titlescroll = 24;
+  printf("\033[32;40m");
+  printf("[\373].80 columns  [\373].ASCII oem set  [\373].ANSI  [\373].colour clash   \n\n");
+  printf("Terminal ready... ");
+  printf("\033[37;40m");
+  printf("\n\033[1m");
+  printf("                                     _____  _                          \r");
+  printf("                                    /  __ \\| |                         \r");
+  printf("           ___  _ __    __ _  _ __  | /  \\/| |_  ___  _ __  _ __ ___   \r");
+  printf("          / __|| '_ \\  / _` || '_ \\ | |    | __|/ _ \\| '__|| '_ ` _ \\  \r\033[0m");
+  printf("          \\__ \\| | | || (_| || |_) || \\__/\\| |_|  __/| |   | | | | | | \r");
+  printf("          |___/|_| |_| \\__,_|| .__/  \\____/ \\__|\\___||_|   |_| |_| |_| \r");
+  printf("                             | |                                       \r");
+  printf("                             |_|                                       \r");
+  printf("\n");
+  printf("\033[1m\033[31;40m");
+  printf("                         !  -  PRE - ALPHA - VERSION - !       \n\n\n");
+  printf("\033[1m\033[33;40m");
+  printf("    BY: Owen Reynolds 2018                      \n\n");
+  printf("CREDIT: Thomas Cherryhomes @ IRATA.ONLINE       \n\n");
+  printf("\033[1m\033[37;40m");
+  printf("                        Built using Z88DK - C compiler for Z80s         \n\n");
+  printf("\033[1m\033[34;40m");
+  printf("               - Join us on Facebook - Z88DK ZX Spectrum user group -   \n\n\033[1m\033[37;40m");
+  printf("                        -\\/\\/\\- ANY KEY TO CONTINUE -/\\/\\/- \033[37;40m");
+
+  in_WaitForKey();
+  do
+  {
+    printf("\r");  
+    newline_attr();
+  }while(--titlescroll!=0);
 }
 
 void main(void)
