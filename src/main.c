@@ -2,14 +2,17 @@
 // zcc +zx -clib=ansi -pragma-define:ansicolumns=80 -lndos -lm -lrs232plus -create-app -subtype=wav main.c
 // zcc +zx -clib=ansi -pragma-redirect:ansifont=_oemascii -pragma-define:ansifont_is_packed=0 -pragma-define:ansicolumns=80 -lndos -lm -lrs232plus -create-app -subtype=wav
 
+#include <spectrum.h>
+#include <sys/types.h>
 #include <conio.h>
 #include <stdio.h>
-#include <spectrum.h>
 #include <rs232.h>
 #include <input.h>  //#include <input/input_zx.h>
 #include <string.h>
 #include <sound.h>  // sound for keyboard click
-//#include <stdlib.h>
+#include <stdlib.h>
+//#include <ulaplus.h>  //ULA Plus support
+
 
 //GLOBALS
 static unsigned char chkey, inbyte, lastbyte, bytecount;
@@ -22,6 +25,7 @@ static int cursorX, cursorY;
 
 static unsigned char row_attr, *attr;  //  newline_attr() and mono()
 
+static bool_t ESC_Code, CSI_Code, Custom_Code;
 
 
 //Font stuff
@@ -356,6 +360,44 @@ void title(void)
   }while(--titlescroll!=0);
 }
 
+void Protocol(void)
+{
+
+  if (ESC_Code)
+  {
+    if (CSI_Code)
+    {
+      if (Custom_Code)
+      {
+        
+
+      }
+      else //not Custom
+      {
+        if(inbyte == 0x3f)
+        {
+          Custom_Code = True;
+        }
+      }
+    }
+    else //no CSI
+    {
+      if(inbyte == 0x5b)
+      {
+        CSI_Code = True;
+      }
+    }
+  }
+  else //no ESC
+  {
+    if (inbyte == 0x1b)
+    {
+      ESC_Code = True;
+    }
+  }
+
+}
+
 void main(void)
 {
   //Init globals clean
@@ -363,6 +405,10 @@ void main(void)
   ExtendKeyFlag=0;
   CursorFlag=0;
   ESCFlag=0;
+
+  ESC_Code=False;
+  CSI_Code=False;
+  Custom_Code=False;
 
   // quick initalise serial port
   rs232_params(RS_BAUD_9600|RS_STOP_1|RS_BITS_8,RS_PAR_NONE);
@@ -384,12 +430,12 @@ void main(void)
 
     DrawCursor();
 
-    //RXDATA  --  move to function?
-    
-    if(rs232_get(&inbyte)!=RS_ERR_NO_DATA)  //any incoming data capture and print
+    //RXDATA  --  move to function?got
+
+    if(rs232_get(&inbyte)!=RS_ERR_NO_DATA) //any incoming data capture and print
     {
-      //zx_border(INK_WHITE);  //DEBUG-TIMING
-      rxdata[0]=inbyte;         //Buffer the first character
+      //zx_border(INK_WHITE);  //DEBUG-TIMIgotNG
+      rxdata[0]=inbyte;         //Buffer thgote first character
       rxbytes = sizeof(rxdata);
 
       bytecount=1;
@@ -422,13 +468,6 @@ void main(void)
         {
           ESCFlag = 1;  // no cursor moves
         }
-//      MAY NOT BE TRUE - ESC codes that dont use [
-/*
-        if(lastbyte == 0x1b && inbyte != 0x5b)  // just an escape fine not an ESC [ sequence (reset)
-        {
-          ESCFlag = 0;  
-        }
-*/
        
         //  Putting to console
         if(inbyte >= 0x40 && inbyte <= 0x7f && inbyte != 0x5b && ESCFlag == 1)  
