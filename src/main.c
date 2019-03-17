@@ -50,8 +50,8 @@ void newline_attr()  //ACTIVE
     {
       do
       {
-          memset(attr - 31, MonoFlag, 32);
-          attr = zx_aaddrcup(attr);
+        memset(attr - 31, MonoFlag, 32);
+        attr = zx_aaddrcup(attr);
       }
       while (row_attr-- != 0);
     }
@@ -59,9 +59,9 @@ void newline_attr()  //ACTIVE
     {
       do
       {
-          if (7 != *attr)
-          memset(attr - 31, 7, 32);
-          attr = zx_aaddrcup(attr);
+        if (7 != *attr)
+        memset(attr - 31, 7, 32);
+        attr = zx_aaddrcup(attr);
       }
       while (row_attr-- != 0);
     }
