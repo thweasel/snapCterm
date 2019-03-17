@@ -22,6 +22,8 @@ static int cursorX, cursorY;
 
 static unsigned char row_attr, *attr;  //  newline_attr() and mono()
 
+
+
 //Font stuff
 #asm  
 SECTION data_user ;
@@ -287,8 +289,9 @@ void demotitle(void)
   for (uint8_t z=0;z<10;++z) {DrawCursor();  in_Pause(100);}  
   printf("Terminal ready... ");
   for (uint8_t z=0;z<10;++z) {DrawCursor();  in_Pause(100);}
+  printf("\07"); in_Pause(50);
   ClearCursor();
-  printf("\07\033[37;40m");
+  printf("\033[37;40m");
   printf("\n\033[1m");
   printf("                                     _____  _                          \r");
   printf("                                    /  __ \\| |                         \r");
