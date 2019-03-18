@@ -73,9 +73,6 @@ void ESC_CSI_6n(void)  //if(inbyte == 0x6e && lastbyte == 0x36)
   rs232_put(s[0]);
 
   rs232_put('R');           // R
-
-  fputc_cons(inbyte);
-  ESCFlag = 0;
 }
 
 void DrawCursor(void)  // Version 2
@@ -180,8 +177,6 @@ void mono()   //Sweep the screen with mono attribute
 
 void Push_inbyte2screen(void)
 {
-  if (inbyte != 0x0d) // We ignore Line Feeds
-  {
     fputc_cons(inbyte);
     if (MonoFlag > 0)
     {
@@ -197,7 +192,6 @@ void Push_inbyte2screen(void)
         newline_attr();
       }
     }
-  }
 }
 
 void Protocol_Reset_All(void)
@@ -214,25 +208,35 @@ void Protocol_Reset_All(void)
 }
 
 void Native_Support(void)
-{
-  Push_inbyte2screen();
-  Protocol_Reset_All();
+{// For pushing ESC codes which wont cause scrolling attr issues
+  fputc_cons(inbyte);
+  ESC_Code = False;
+  CSI_Code = False;
+  Custom_Code = False;
+  ESC_Num_String_Counter = sizeof(ESC_Num_String)-1;
+  do
+  {
+    ESC_Num_String[ESC_Num_String_Counter] = NULL;
+  }while(--ESC_Num_String_Counter > 0);
+  
+  //Push_inbyte2screen();
+  //Protocol_Reset_All();
 }
 
 void Protocol(void)
 {
   if (ESC_Code) // 0x1b ESC
-  {// ESC    
+  {// ESC_Code -- set (True)    
     if (CSI_Code) // 0x5b [ (CSI)
-    {// ESC [
-      if (Custom_Code) // 0x3b ?
-      {//   ESC [ ?
+    {// ESC_Code CSI_Code -- set
+      if (Custom_Code) // 0x3b ? (Custom)
+      {//ESC_Code CSI_Code Custom_Code -- set (True)
         if(inbyte >= '0' && inbyte >= '9')
-        {// ESC [ ? "0-9"
-          
+        {// ESC [ ? "0-9"  -- OK Z88DK
           if(ESC_Num_String_Counter<sizeof(ESC_Num_String))
           {
-            Push_inbyte2screen();
+            //Push_inbyte2screen();
+            fputc_cons(inbyte);
             ESC_Num_String[ESC_Num_String_Counter] = inbyte;  
             ESC_Num_String_Counter++;
           }
@@ -241,33 +245,31 @@ void Protocol(void)
             printf("!!! ESC_Num_String Buffer over flow - in ESC [ ? 0-9 !!!");
           }  
         }
+        else if(inbyte == ';')  
+        {// ESC [ ## ; -- Number pair breaks  -- OK Z88DK
+          //Push_inbyte2screen();
+          fputc_cons(inbyte);
+        }
         else
         {// ESC [ ? "Unknown"
-          Push_inbyte2screen();
-          Protocol_Reset_All();
+          Native_Support();
           bit_beep(1000,30);     // DEBUG -- BEEP CODE
-          
         }
-
       }
       else
-      {//   ESC [  
+      {//ESC_Code CSI_Code Custom_Code -- not set (False)
         if(inbyte == 0x3f) 
         {// ESC [ ? -- Custom Code
           Custom_Code = True;
-          Push_inbyte2screen();
-        }
-        else if(inbyte == 'm')  // Most common?
-        {// ESC [ # m -- Select Graphic Rendition  -- OK Z88DK
-          // Check the Text Attributes resolve clash
-          Native_Support();
+          fputc_cons(inbyte);
+          //Push_inbyte2screen();
         }
         else if(inbyte >= '0' && inbyte <= '9') 
-        {// ESC [ "0-9"
-          
+        {// ESC [ "0-9"  -- OK Z88DK
           if(ESC_Num_String_Counter<sizeof(ESC_Num_String))
           {
-            Push_inbyte2screen();
+            //Push_inbyte2screen();
+            fputc_cons(inbyte);
             ESC_Num_String[ESC_Num_String_Counter] = inbyte;           
             ESC_Num_String_Counter++;
           }
@@ -275,11 +277,20 @@ void Protocol(void)
           {
             printf("!!! ESC_Num_String Buffer over flow - in ESC [ 0-9 !!!");
           }
-          
         }
         else if(inbyte == ';')  
-        {// ESC [ ## ; -- Number pair breaks
-          Push_inbyte2screen();
+        {// ESC [ ## ; -- Number pair breaks  -- OK Z88DK
+          //Push_inbyte2screen();
+          fputc_cons(inbyte);
+        }
+        else if(inbyte == 'm')
+        {// ESC [ # m -- Select Graphic Rendition  -- OK Z88DK
+          // Check the Text Attributes resolve clash
+          Native_Support();
+        }
+        else if (inbyte == 'H')
+        {// ESC [ ## ; ## H -- Cursor Position  -- OK Z88DK
+          Native_Support();
         }
         else if(inbyte == '!')
         {// ESC [ ! -- Soft Reset  (might be !p not !)
@@ -302,15 +313,34 @@ void Protocol(void)
           Native_Support();
         }
         else if (inbyte == 'J')
-        {// ESC [ # J -- Erase in Display  -- OK Z88DK (no numbers)
-          Native_Support();
-        }
-        else if (inbyte == 'H')
-        {// ESC [ ## ; ## H -- Cursor Position  -- OK Z88DK
-          Native_Support();
+        {// ESC [ # J -- Erase in Display  -- OK Z88DK (Clears screen only)        
+          switch(atoi(ESC_Num_String))
+            {
+              /*
+              case 0:
+                //Esc[0J	Clear screen from cursor down
+              break;
+              case 1:
+                //Esc[1J	Clear screen from cursor up
+              break;
+              */
+              case 2 :  //Esc[2J	Clear entire screen	ED2
+                Native_Support();
+              break;
+              default :
+                Native_Support();  //not implemented :P
+                //Esc[J	Clear screen from cursor down
+              break;
+            }
         }
         else if (inbyte == 'K')
-        {// ESC [ # K -- Clear to end of line  -- OK Z88DK (no numbers)
+        {// ESC [ # K -- Clear to end of line  -- OK Z88DK (Clear line from cursor right only)
+          /*
+          Esc[K	Clear line from cursor right
+          Esc[0K	Clear line from cursor right
+          Esc[1K	Clear line from cursor left
+          Esc[2K	Clear entire line
+          */
           Native_Support();
         }
         else if (inbyte == 'c')
@@ -320,22 +350,17 @@ void Protocol(void)
         else if(inbyte == 'n')  
         {// ESC [ # n -- Device Status Report  -- BROKEN Z88DK (mode 6 only and its broken!)
           // Check the CSI number for action to perform
-          
           switch(atoi(ESC_Num_String))
           {
             case 6 :
               ESC_CSI_6n();
             break;
             default :
-              printf("\07");
+              //  Beep ?
             break;
           }
-          
-          Native_Support();
-          //printf("!!!!!  %d  !!!!!",atoi(ESC_Num_String));
-          //in_WaitForKey();
+          Native_Support();  // May need to change the inbyte to ! and push that to reset ESC sequence?
         }
-
         else if(inbyte == 's')
         {// ESC [ s -- Save Cursor Location  -- OK Z88DK ( s-j )
           Native_Support();
@@ -346,38 +371,45 @@ void Protocol(void)
         }
         else 
         {// ESC [ "Unknown"
-          Push_inbyte2screen();
+          //Push_inbyte2screen();
+          fputc_cons(inbyte);
           Protocol_Reset_All();
           bit_beep(500,30);     // DEBUG -- BEEP CODE
         }
       }
     }
     else 
-    {//   ESC
-      if(inbyte == 0x5b) 
-      {// ESC [ (CSI)
+    {// ESC_Code CSI_Code -- not set (False)
+      if(inbyte == 0x5b) //  [ 
+      {// Set -- CSI_Code True 
         CSI_Code = True;
-        Push_inbyte2screen();
+        fputc_cons(inbyte);
+        //Push_inbyte2screen();
       }   
       else 
       {// ESC "Unknown"
-        Push_inbyte2screen();
+        //Push_inbyte2screen();
+        fputc_cons(inbyte);
         Protocol_Reset_All();
-        //printf("\07");
+
         bit_beep(100,30);        // DEBUG -- BEEP CODE
       }
     }
   }
-  else //no ESC
-  {
+  else 
+  {// ESC_Code -- not set (False)
     if (inbyte == 0x1b) // ESC
-    {
+    {// Set -- ESC_Code True
       ESC_Code = True;
-      Push_inbyte2screen();
+      fputc_cons(inbyte);
+      //Push_inbyte2screen();
     }
-    else // Just another charcter to show
+    else // Just another character to show
     {
-      Push_inbyte2screen();
+      if (inbyte != 0x0d) // We ignore Line Feeds
+      {
+        Push_inbyte2screen();  //Pushes to screen and checks attribs & fixes
+      }
     }
     
   }
@@ -771,7 +803,7 @@ void main(void)
 */
         //QUICK keyboard check if we are reading alot so we can interupt
         
-        if(ESCFlag == 0)
+        if(!ESC_Code)
         {
           //zx_border(INK_CYAN);  //DEBUG
           KeyReadMulti(0,1);  // 2 Reading the keyboard here seemed to break in to ESC [ some times.
