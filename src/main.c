@@ -19,7 +19,7 @@
 static unsigned char chkey, inbyte, lastbyte, bytecount;
 static unsigned char rxdata[18] ,rxbytes; //  RXDATA -- 10[/] 20[/] 40[-] 80[x]
 static unsigned char txdata[20], txbytes; //  TX DATA -- 20
-static unsigned char ESC_Num_String[4];   //  ESC code number string
+static unsigned char ESC_Num_String[8];   //  ESC code number string 4[X] 8[-]
 static uint8_t ESC_Num_String_Counter;    //  Counter for the ESC Code string
 
 static unsigned char *CursorAddr;
@@ -202,16 +202,21 @@ void Push_inbyte2screen(void)
 
 void Protocol_Reset_All(void)
 {
-  
   ESC_Code = False;
   CSI_Code = False;
   Custom_Code = False;
-  ESC_Num_String_Counter = sizeof(ESC_Num_String);
+  ESC_Num_String_Counter = sizeof(ESC_Num_String)-1;
   do
   {
     ESC_Num_String[ESC_Num_String_Counter] = NULL;
   }while(--ESC_Num_String_Counter > 0);
   
+}
+
+void Native_Support(void)
+{
+  Push_inbyte2screen();
+  Protocol_Reset_All();
 }
 
 void Protocol(void)
@@ -224,23 +229,23 @@ void Protocol(void)
       {//   ESC [ ?
         if(inbyte >= '0' && inbyte >= '9')
         {// ESC [ ? "0-9"
+          
           if(ESC_Num_String_Counter<sizeof(ESC_Num_String))
           {
-            ESC_Num_String[ESC_Num_String_Counter] = inbyte;
             Push_inbyte2screen();
+            ESC_Num_String[ESC_Num_String_Counter] = inbyte;  
             ESC_Num_String_Counter++;
-
           }
           else
           {
-            printf("!!!ESC_Num_String Buffer over flow!!!");
+            printf("!!! ESC_Num_String Buffer over flow - in ESC [ ? 0-9 !!!");
           }  
         }
         else
         {// ESC [ ? "Unknown"
           Push_inbyte2screen();
           Protocol_Reset_All();
-          //bit_beep(100,600);     // DEBUG -- BEEP CODE
+          bit_beep(1000,30);     // DEBUG -- BEEP CODE
           
         }
 
@@ -252,37 +257,98 @@ void Protocol(void)
           Custom_Code = True;
           Push_inbyte2screen();
         }
+        else if(inbyte == 'm')  // Most common?
+        {// ESC [ # m -- Select Graphic Rendition  -- OK Z88DK
+          // Check the Text Attributes resolve clash
+          Native_Support();
+        }
         else if(inbyte >= '0' && inbyte <= '9') 
         {// ESC [ "0-9"
+          
           if(ESC_Num_String_Counter<sizeof(ESC_Num_String))
           {
-            ESC_Num_String[ESC_Num_String_Counter] = inbyte;
             Push_inbyte2screen();
+            ESC_Num_String[ESC_Num_String_Counter] = inbyte;           
             ESC_Num_String_Counter++;
           }
           else
           {
-            printf("!!!ESC_Num_String Buffer over flow!!!");
+            printf("!!! ESC_Num_String Buffer over flow - in ESC [ 0-9 !!!");
           }
           
         }
-        else if(inbyte == 'n')  
-        {// ESC [ # n -- Device Status Report
-          // Check the CSI number for action to perform
-          Protocol_Reset_All();
+        else if(inbyte == ';')  
+        {// ESC [ ## ; -- Number pair breaks
           Push_inbyte2screen();
         }
-        else if(inbyte == 'm')  
-        {// ESC [ # m -- Select Graphic Rendition
-          // Check the Text Attributes resolve clash
-          Push_inbyte2screen();
-          Protocol_Reset_All();
+        else if(inbyte == '!')
+        {// ESC [ ! -- Soft Reset  (might be !p not !)
+          Native_Support();
+        }
+        else if(inbyte == 'A')
+        {// ESC [ # A -- Cursor UP  -- OK Z88DK
+          Native_Support();
+        }
+        else if(inbyte == 'B')
+        {// ESC [ # B -- Cursor DOWN  -- OK Z88DK
+          Native_Support();
+        }
+        else if(inbyte == 'C')
+        {// ESC [ # C -- Cursor FORWARD  -- OK Z88DK
+          Native_Support();
+        }
+        else if(inbyte == 'D')
+        {// ESC [ # D -- Cursor BACKWARDS  -- OK Z88DK
+          Native_Support();
+        }
+        else if (inbyte == 'J')
+        {// ESC [ # J -- Erase in Display  -- OK Z88DK (no numbers)
+          Native_Support();
+        }
+        else if (inbyte == 'H')
+        {// ESC [ ## ; ## H -- Cursor Position  -- OK Z88DK
+          Native_Support();
+        }
+        else if (inbyte == 'K')
+        {// ESC [ # K -- Clear to end of line  -- OK Z88DK (no numbers)
+          Native_Support();
+        }
+        else if (inbyte == 'c')
+        {// ESC [ c -- Identify Terminal
+          Native_Support();
+        }
+        else if(inbyte == 'n')  
+        {// ESC [ # n -- Device Status Report  -- BROKEN Z88DK (mode 6 only and its broken!)
+          // Check the CSI number for action to perform
+          
+          switch(atoi(ESC_Num_String))
+          {
+            case 6 :
+              ESC_CSI_6n();
+            break;
+            default :
+              printf("\07");
+            break;
+          }
+          
+          Native_Support();
+          //printf("!!!!!  %d  !!!!!",atoi(ESC_Num_String));
+          //in_WaitForKey();
+        }
+
+        else if(inbyte == 's')
+        {// ESC [ s -- Save Cursor Location  -- OK Z88DK ( s-j )
+          Native_Support();
+        }
+        else if(inbyte == 'u')
+        {// ESC [ u -- Restore Cursor Location  -- OK Z88DK ( u-k )
+          Native_Support();
         }
         else 
         {// ESC [ "Unknown"
           Push_inbyte2screen();
           Protocol_Reset_All();
-          //bit_beep(100,400);     // DEBUG -- BEEP CODE
+          bit_beep(500,30);     // DEBUG -- BEEP CODE
         }
       }
     }
@@ -298,7 +364,7 @@ void Protocol(void)
         Push_inbyte2screen();
         Protocol_Reset_All();
         //printf("\07");
-        //bit_beep(100,200);        // DEBUG -- BEEP CODE
+        bit_beep(100,30);        // DEBUG -- BEEP CODE
       }
     }
   }
@@ -702,7 +768,7 @@ void main(void)
         }
 
         lastbyte=inbyte;
-
+*/
         //QUICK keyboard check if we are reading alot so we can interupt
         
         if(ESCFlag == 0)
@@ -710,7 +776,7 @@ void main(void)
           //zx_border(INK_CYAN);  //DEBUG
           KeyReadMulti(0,1);  // 2 Reading the keyboard here seemed to break in to ESC [ some times.
         }
-*/
+
       }while(++bytecount<rxbytes);
     }
     else //no incoming data check keyboard
