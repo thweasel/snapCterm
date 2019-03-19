@@ -16,9 +16,9 @@
 
 
 //GLOBALS
-static unsigned char chkey, inbyte, lastbyte, bytecount;
-static unsigned char rxdata[18] ,rxbytes; //  RXDATA -- 10[/] 20[/] 40[-] 80[x]
-static unsigned char txdata[20], txbytes; //  TX DATA -- 20
+static unsigned char chkey, inbyte, lastbyte;  // delete bytecount
+static unsigned char rxdata[18] ,rxbytes, rxbyte_count; //  RXDATA -- 10[/] 20[/] 40[-] 80[x]
+static unsigned char txdata[20], txbytes, txbyte_count; //  TX DATA -- 20
 static unsigned char ESC_Num_String[8];   //  ESC code number string 4[X] 8[-]
 static uint8_t ESC_Num_String_Counter;    //  Counter for the ESC Code string
 
@@ -428,8 +428,9 @@ void keyboard_click(void)  //ACTIVE
 
 void KeyReadMulti(unsigned char time_ms, unsigned char repeat)  //ACTIVE  --  TX loop needs work & more Key mappings
 {
-  txbytes = 0;
-  txdata[0]=NULL;
+  //Moved the reset below to after TX
+  //txbytes = 0;
+  //txdata[0]=NULL;
   //zx_border(INK_YELLOW);  //  DEBUG-TIMING
  
   do
@@ -545,17 +546,22 @@ void KeyReadMulti(unsigned char time_ms, unsigned char repeat)  //ACTIVE  --  TX
   }while(--repeat!=0);
 
   //zx_border(INK_WHITE);  //DEBUG-TIMING
-  if(txbytes>0)
+
+  if(txbytes>0 && !ESC_Code)//ONLY TX when not RX an ESC Code.  only exception is replying to ESC[6n function
   {
-    //zx_border(INK_YELLOW);  //DEBUG-TIMING
-    bytecount = 0;
-    do
-    {
-      rs232_put(txdata[bytecount]);
-    }while(++bytecount<txbytes);
+      //zx_border(INK_YELLOW);  //DEBUG-TIMING
+      txbyte_count = 0;
+      do
+      {
+        rs232_put(txdata[txbyte_count]);
+      }while(++txbyte_count<txbytes);
+
+      txbytes = 0;
+      txdata[0]=NULL;
   }
   //zx_border(INK_BLACK);  //DEBUG-TIMING
 }
+
 
 void demotitle(void)
 { 
@@ -676,31 +682,31 @@ void main(void)
       rxdata[0]=inbyte;         //Buffer the first character
       rxbytes = sizeof(rxdata);
 
-      bytecount=1;
+      rxbyte_count=1;
       do
       {
         if (rs232_get(&inbyte) != RS_ERR_NO_DATA)  //If character add it to the buffer
         {
-          rxdata[bytecount]=inbyte;
+          rxdata[rxbyte_count]=inbyte;
         }
         else  //Else no character record the number of bytes we have collected
         {
-          rxbytes = bytecount;
-          bytecount = sizeof(rxdata)+1; //kill the for loop
+          rxbytes = rxbyte_count;
+          rxbyte_count = sizeof(rxdata)+1; //kill the for loop
         }
 
-      }while(++bytecount<rxbytes);
+      }while(++rxbyte_count<rxbytes);
 
       //  TODO in Draw Screen (ESC code catching)
       //  Need to handle Device Status requests.  
       //DRAW SCREEN  (Technically process the RX Buffer, act on ESC code and push text to screen)
       
-      bytecount=0;
+      rxbyte_count=0;
       do
       {       
         ClearCursor();  // Blank characters wont over write the cursor if its showing
         //zx_border(INK_BLACK); //DEBUG-TIMING
-        inbyte = rxdata[bytecount];
+        inbyte = rxdata[rxbyte_count];
         Protocol();  // process inbyte
 /*
         if (inbyte == 0x1b) //Catch the start of ESC [  --  Need to stop Cursor movement to preserve the ESC [ sequence (drawing and deleting puts to the console)
@@ -803,18 +809,16 @@ void main(void)
 */
         //QUICK keyboard check if we are reading alot so we can interupt
         
-        if(!ESC_Code)
-        {
           //zx_border(INK_CYAN);  //DEBUG
           KeyReadMulti(0,1);  // 2 Reading the keyboard here seemed to break in to ESC [ some times.
-        }
 
-      }while(++bytecount<rxbytes);
+      }while(++rxbyte_count<rxbytes);
     }
     else //no incoming data check keyboard
     {
       //zx_border(INK_RED);  // DEBUG
       KeyReadMulti(10,30);   // 10,30
+      //KeyReadMulti(0,1);
     }
 
     if(MonoFlag != 0 && MonoFlag != zx_attr(23,31)) {mono();} // Mono flag set, if attr in corner dont match sweep the screen
