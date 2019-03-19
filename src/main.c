@@ -16,7 +16,7 @@
 
 
 //GLOBALS
-static unsigned char chkey, inbyte, lastbyte;  // delete bytecount
+static unsigned char chkey, inbyte, lastbyte;  // delete bytecount  -- To delete lastbyte
 static unsigned char rxdata[18] ,rxbytes, rxbyte_count; //  RXDATA -- 10[/] 20[/] 40[-] 80[x]
 static unsigned char txdata[20], txbytes, txbyte_count; //  TX DATA -- 20
 static unsigned char ESC_Num_String[8];   //  ESC code number string 4[X] 8[-]
