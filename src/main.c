@@ -667,7 +667,7 @@ void main(void)
   cprintf("\033[37;40m");  // esc [ ESC SEQUENCE (Foreground)White;(Background)Black m (to terminate)
  
   //title();  //  -- TITLE --  
-  //demotitle();
+  demotitle();
 
   while(1)  // MAIN PROGRAM LOOP
   {
