@@ -16,19 +16,31 @@
 
 
 //GLOBALS
-static unsigned char chkey, inbyte, lastbyte;  // delete bytecount  -- To delete lastbyte
-static unsigned char rxdata[18] ,rxbytes, rxbyte_count; //  RXDATA -- 10[/] 20[/] 40[-] 80[x]
-static unsigned char txdata[20], txbytes, txbyte_count; //  TX DATA -- 20
-static unsigned char ESC_Num_String[8];   //  ESC code number string 4[X] 8[-]
-static uint8_t ESC_Num_String_Counter;    //  Counter for the ESC Code string
 
+//Transmission TX & RX
+static unsigned char chkey, inbyte;  // deleted bytecount lastbyte -- To delete
+static unsigned char rxdata[55] ,rxbytes, rxbyte_count; //  RXDATA -- 10[/] 20[/] 40[-] 80[x]  @9600 ~18 @19200 ~50/60
+static unsigned char txdata[20], txbytes, txbyte_count; //  TX DATA -- 20
+
+//ESC Code registers & variables -- Protocol()
+static bool_t ESC_Code, CSI_Code, Custom_Code;
+static unsigned char  ESC_Num_String[8];   //  ESC code number string 4[X] 8[-]
+static uint8_t        ESC_Num_String_Index;      //  Index for the ESC_Num_String
+static int            ESC_Num_Int[8];                //  ESC code number strings as ints
+static uint8_t        ESC_Num_Int_Index;         //  Index for the ESC_Num_Int
+static uint8_t        ESC_Num_Int_Counter;       //  Counter for processing the ESC_Num_Int
+
+//To Sort
 static unsigned char *CursorAddr;
-static uint_fast8_t ExtendKeyFlag, CursorFlag, CursorMask, ESCFlag, MonoFlag;  // to delete - ESCFlag -
+static uint_fast8_t ExtendKeyFlag, CursorFlag, CursorMask, MonoFlag;  // deleted - ESCFlag -
 static int cursorX, cursorY;  
 
-static unsigned char row_attr, *attr;  //  newline_attr() and mono()
+//Scroll fix & Attribute painting -- newline_attr() and mono()
+static unsigned char row_attr, *attr; 
 
-static bool_t ESC_Code, CSI_Code, Custom_Code;
+//SGR registers
+static bool_t ClashCorrection,Bold;
+static uint8_t ForegroundColour, BackgroundColour;
 
 
 //Font stuff
@@ -43,7 +55,7 @@ _oemascii:
 #endasm
 
 
-void ESC_CSI_6n(void)  //if(inbyte == 0x6e && lastbyte == 0x36)  
+void ESC_CSI_6n(void)
 {//Report cursor possition -- ESC [ ROW ; COLUMN R  Row and column need to be as TEXT
   char s[2];        
 
@@ -75,7 +87,7 @@ void ESC_CSI_6n(void)  //if(inbyte == 0x6e && lastbyte == 0x36)
   rs232_put('R');           // R
 }
 
-void DrawCursor(void)  // Version 2
+void DrawCursor(void)
 {
   cursorX = wherex();
   cursorY = wherey();
@@ -128,12 +140,12 @@ void DrawCursor(void)  // Version 2
   }
 }
 
-void ClearCursor(void)  // Version 2  --  Call this when not putting none printing characters on the screen
+void ClearCursor(void)  // Call this when not putting none printing characters on the screen
 {
   if(CursorFlag==1) {DrawCursor();}
 }
 
-void newline_attr()  //ACTIVE
+void newline_attr()
 {//Allen Albright's method  -- Extended to cover MONO mode
     row_attr = 23;
     attr = zx_cyx2aaddr(23,31);
@@ -194,33 +206,54 @@ void Push_inbyte2screen(void)
     }
 }
 
-void Protocol_Reset_All(void)
+void Protocol_Reset_All(void)  //  To be called at end of ESC code processing
 {
   ESC_Code = False;
   CSI_Code = False;
   Custom_Code = False;
-  ESC_Num_String_Counter = sizeof(ESC_Num_String)-1;
-  do
-  {
-    ESC_Num_String[ESC_Num_String_Counter] = NULL;
-  }while(--ESC_Num_String_Counter > 0);
   
+  if (ESC_Num_String_Index > 0)
+  {
+    do
+    {
+      ESC_Num_String[ESC_Num_String_Index] = NULL;
+    }while(--ESC_Num_String_Index > 0);  // Clears Array and resets the index  
+  }
+  
+  if(ESC_Num_Int_Index > 0)
+  {
+    do
+    {
+      ESC_Num_Int[ESC_Num_Int_Index] = NULL;
+    } while (--ESC_Num_Int_Index > 0);  // Clears Array and resets the index  
+  }
 }
 
-void Native_Support(void)
-{// For pushing ESC codes which wont cause scrolling attr issues
+void Native_Support(void)  // For pushing ESC codes which wont cause scrolling attr issues
+{
   fputc_cons(inbyte);
-  ESC_Code = False;
-  CSI_Code = False;
-  Custom_Code = False;
-  ESC_Num_String_Counter = sizeof(ESC_Num_String)-1;
-  do
+  Protocol_Reset_All();
+}
+
+void ESC_Num_Str2Int(void)
+{
+  if(ESC_Num_Int_Index<sizeof(ESC_Num_Int))
   {
-    ESC_Num_String[ESC_Num_String_Counter] = NULL;
-  }while(--ESC_Num_String_Counter > 0);
+    ESC_Num_Int[ESC_Num_Int_Index] = atoi(ESC_Num_String);
+    ESC_Num_Int_Index++;
+  }
+  else
+  {
+    printf("!!! ESC_Num_Int Buffer over flow - in ESC_Num_Str2Int !!!");
+  }
   
-  //Push_inbyte2screen();
-  //Protocol_Reset_All();
+  if (ESC_Num_String_Index > 0)
+  {
+    do
+    {
+      ESC_Num_String[ESC_Num_String_Index] = NULL;
+    }while(--ESC_Num_String_Index > 0);  // Clears Array and the index counter 
+  }
 }
 
 void Protocol(void)
@@ -230,15 +263,15 @@ void Protocol(void)
     if (CSI_Code) // 0x5b [ (CSI)
     {// ESC_Code CSI_Code -- set
       if (Custom_Code) // 0x3b ? (Custom)
-      {//ESC_Code CSI_Code Custom_Code -- set (True)
+      {//ESC_Code CSI_Code SET -- Custom_Code -- set (True)
         if(inbyte >= '0' && inbyte >= '9')
         {// ESC [ ? "0-9"  -- OK Z88DK
-          if(ESC_Num_String_Counter<sizeof(ESC_Num_String))
+          if(ESC_Num_String_Index<sizeof(ESC_Num_String))
           {
             //Push_inbyte2screen();
             fputc_cons(inbyte);
-            ESC_Num_String[ESC_Num_String_Counter] = inbyte;  
-            ESC_Num_String_Counter++;
+            ESC_Num_String[ESC_Num_String_Index] = inbyte;  
+            ESC_Num_String_Index++;
           }
           else
           {
@@ -248,6 +281,7 @@ void Protocol(void)
         else if(inbyte == ';')  
         {// ESC [ ## ; -- Number pair breaks  -- OK Z88DK
           //Push_inbyte2screen();
+          ESC_Num_Str2Int();
           fputc_cons(inbyte);
         }
         else
@@ -257,7 +291,7 @@ void Protocol(void)
         }
       }
       else
-      {//ESC_Code CSI_Code Custom_Code -- not set (False)
+      {//ESC_Code CSI_Code SET -- Custom_Code -- not set (False)
         if(inbyte == 0x3f) 
         {// ESC [ ? -- Custom Code
           Custom_Code = True;
@@ -266,12 +300,12 @@ void Protocol(void)
         }
         else if(inbyte >= '0' && inbyte <= '9') 
         {// ESC [ "0-9"  -- OK Z88DK
-          if(ESC_Num_String_Counter<sizeof(ESC_Num_String))
+          if(ESC_Num_String_Index<sizeof(ESC_Num_String))
           {
             //Push_inbyte2screen();
             fputc_cons(inbyte);
-            ESC_Num_String[ESC_Num_String_Counter] = inbyte;           
-            ESC_Num_String_Counter++;
+            ESC_Num_String[ESC_Num_String_Index] = inbyte;           
+            ESC_Num_String_Index++;
           }
           else
           {
@@ -281,34 +315,105 @@ void Protocol(void)
         else if(inbyte == ';')  
         {// ESC [ ## ; -- Number pair breaks  -- OK Z88DK
           //Push_inbyte2screen();
+          ESC_Num_Str2Int();
           fputc_cons(inbyte);
         }
         else if(inbyte == 'm')
         {// ESC [ # m -- Select Graphic Rendition  -- OK Z88DK
-          // Check the Text Attributes resolve clash
-          Native_Support();
+          //Process Handle inbyte as normal > Reverse Clash Correction & inject then re-inject last ESC code > Update SGR > Detect clash/Correct clash & inject
+
+          //Handle the inbyte as usual
+          ESC_Num_Str2Int();
+          fputc_cons(inbyte);
+
+          //Reverse colour clash correction
+          if (ClashCorrection)
+          { 
+            ClashCorrection = False;             
+            
+            //  This table reverses the colour clash must match "Colour Clash correction Table"
+            if      (ForegroundColour ==37) {cprintf("\033[0;1;30;40m");   Bold=1; ForegroundColour=30; BackgroundColour=40;}    //Black
+            //else if (ForegroundColour ==35) {cprintf("\033[31m");   ForegroundColour=31;}      //Red
+            //else if (ForegroundColour ==33) {cprintf("\033[32m");   ForegroundColour=32;}      //Green
+            //else if (ForegroundColour ==37) {cprintf("\033[33m");   ForegroundColour=33;}      //Yellow
+            else if (ForegroundColour ==36) {cprintf("\033[0;1;34;44m");   Bold=1; ForegroundColour=34; BackgroundColour=44;}      //Blue
+            //else if (ForegroundColour ==37) {cprintf("\033[35m");   ForegroundColour=35;}      //Magenta
+            //else if (ForegroundColour ==37) {cprintf("\033[1;36m"); Bold=1; ForegroundColour=36;}    //Cyan
+            //else if (ForegroundColour ==37) {cprintf("\033[37m");   ForegroundColour=37;}      //White
+
+            //Replay the ESC last code
+            printf("\033[");
+            ESC_Num_Int_Counter = 0;
+            while (ESC_Num_Int_Counter<ESC_Num_Int_Index)
+            {
+              if(ESC_Num_Int[ESC_Num_Int_Counter]/10!=0)
+              {
+                itoa(ESC_Num_Int[ESC_Num_Int_Counter]/10,ESC_Num_String,10);
+                fputc_cons(ESC_Num_String[0]);        // # (10s)
+              }
+              itoa(ESC_Num_Int[ESC_Num_Int_Counter]%10,ESC_Num_String,10);
+              fputc_cons(ESC_Num_String[0]);          // # (1s)
+
+              fputc_cons(';');
+              ESC_Num_Int_Counter++;            
+            }
+            fputc_cons('m');
+          }
+
+          // Update SGR Registers
+          ESC_Num_Int_Counter=0;
+          while (ESC_Num_Int_Counter < ESC_Num_Int_Index)
+          {
+            if      (ESC_Num_Int[ESC_Num_Int_Counter] == 0) {Bold = False; ForegroundColour=37; BackgroundColour=40;}  // Reset all
+            else if (ESC_Num_Int[ESC_Num_Int_Counter] == 1) {Bold = True;}   // Set Bold (Bright)       
+            else if (ESC_Num_Int[ESC_Num_Int_Counter] >= 30 && ESC_Num_Int[ESC_Num_Int_Counter] <= 39 ) {ForegroundColour = ESC_Num_Int[ESC_Num_Int_Counter];}
+            else if (ESC_Num_Int[ESC_Num_Int_Counter] >= 40 && ESC_Num_Int[ESC_Num_Int_Counter] <= 49 ) {BackgroundColour = ESC_Num_Int[ESC_Num_Int_Counter];}
+            ESC_Num_Int_Counter++;            
+          }
+       
+          //Detect Clash and Inject correction
+          if (Bold)  // Clash only occurs when Bold is used
+          {
+            if(ForegroundColour == (BackgroundColour-10))  // Clash happens when FG & BG are the same and Bold is used to Bright the Text for contrast
+            {
+              ClashCorrection = True;  // Flag we have changed the colours to correct clash
+              
+              //  Colour Clash correction Table
+              
+              if      (ForegroundColour == 30) {cprintf("\033[0;37;40m"); Bold=0; ForegroundColour=37; BackgroundColour=40;}  //Black > White (grey)
+             // else if (ForegroundColour == 31) {cprintf("\033[35m"); ForegroundColour=35;}  //Red > Magenta
+             // else if (ForegroundColour == 32) {cprintf("\033[33m"); ForegroundColour=33;}  //Green
+             // else if (ForegroundColour == 33) {cprintf("\033[37m"); ForegroundColour=37;}  //Yellow
+              else if (ForegroundColour == 34) {cprintf("\033[0;36;44m"); Bold=0; ForegroundColour=36; BackgroundColour=44;}  //Blue
+             // else if (ForegroundColour == 35) {cprintf("\033[37m"); ForegroundColour=37;}  //Magenta
+             // else if (ForegroundColour == 36) {cprintf("\033[0;37m"); Bold=0; ForegroundColour=37;}  //Cyan
+             // else if (ForegroundColour == 37) {cprintf("\033[37m"); ForegroundColour=37;}  //White       
+            }
+          }
+          
+          Protocol_Reset_All();
         }
         else if (inbyte == 'H')
         {// ESC [ ## ; ## H -- Cursor Position  -- OK Z88DK
           Native_Support();
         }
-        else if(inbyte == '!')
+        else if (inbyte == '!')
         {// ESC [ ! -- Soft Reset  (might be !p not !)
           Native_Support();
         }
-        else if(inbyte == 'A')
+        else if (inbyte == 'A')
         {// ESC [ # A -- Cursor UP  -- OK Z88DK
           Native_Support();
         }
-        else if(inbyte == 'B')
+        else if (inbyte == 'B')
         {// ESC [ # B -- Cursor DOWN  -- OK Z88DK
           Native_Support();
         }
-        else if(inbyte == 'C')
+        else if (inbyte == 'C')
         {// ESC [ # C -- Cursor FORWARD  -- OK Z88DK
           Native_Support();
         }
-        else if(inbyte == 'D')
+        else if (inbyte == 'D')
         {// ESC [ # D -- Cursor BACKWARDS  -- OK Z88DK
           Native_Support();
         }
@@ -326,6 +431,7 @@ void Protocol(void)
               */
               case 2 :  //Esc[2J	Clear entire screen	ED2
                 Native_Support();
+                cprintf("\033[J");
               break;
               default :
                 Native_Support();  //not implemented :P
@@ -347,7 +453,7 @@ void Protocol(void)
         {// ESC [ c -- Identify Terminal
           Native_Support();
         }
-        else if(inbyte == 'n')  
+        else if (inbyte == 'n')  
         {// ESC [ # n -- Device Status Report  -- BROKEN Z88DK (mode 6 only and its broken!)
           // Check the CSI number for action to perform
           switch(atoi(ESC_Num_String))
@@ -361,11 +467,11 @@ void Protocol(void)
           }
           Native_Support();  // May need to change the inbyte to ! and push that to reset ESC sequence?
         }
-        else if(inbyte == 's')
+        else if (inbyte == 's')
         {// ESC [ s -- Save Cursor Location  -- OK Z88DK ( s-j )
           Native_Support();
         }
-        else if(inbyte == 'u')
+        else if (inbyte == 'u')
         {// ESC [ u -- Restore Cursor Location  -- OK Z88DK ( u-k )
           Native_Support();
         }
@@ -643,19 +749,23 @@ void title(void)
 void main(void)
 {
   //Init globals clean
-  lastbyte=0;
   ExtendKeyFlag=0;
   CursorFlag=0;
-  ESCFlag=0;
 
   ESC_Code=False;
   CSI_Code=False;
   Custom_Code=False;
 
-  ESC_Num_String_Counter=0;
+  ESC_Num_String_Index=0;
+  ESC_Num_Int_Index=0;
+  ESC_Num_Int_Counter=0;
+  ClashCorrection = False;
 
   // quick initalise serial port
-  rs232_params(RS_BAUD_9600|RS_STOP_1|RS_BITS_8,RS_PAR_NONE);
+  //rs232_params(RS_BAUD_9600|RS_STOP_1|RS_BITS_8,RS_PAR_NONE);  //  Works solid
+  rs232_params(RS_BAUD_19200|RS_STOP_1|RS_BITS_8,RS_PAR_NONE);   //  Make sure to set your Serial port correctly!
+  //rs232_params(RS_BAUD_38400|RS_STOP_1|RS_BITS_8,RS_PAR_NONE);
+  
   rs232_init();
 
   // Clean up the screen
@@ -665,9 +775,12 @@ void main(void)
   
   //ANSI ESCAPE codes TO SET UP
   cprintf("\033[37;40m");  // esc [ ESC SEQUENCE (Foreground)White;(Background)Black m (to terminate)
- 
+  ForegroundColour = 37;
+  BackgroundColour = 40;
+  Bold = False;
+
   //title();  //  -- TITLE --  
-  demotitle();
+  //demotitle();
 
   while(1)  // MAIN PROGRAM LOOP
   {
@@ -697,8 +810,6 @@ void main(void)
 
       }while(++rxbyte_count<rxbytes);
 
-      //  TODO in Draw Screen (ESC code catching)
-      //  Need to handle Device Status requests.  
       //DRAW SCREEN  (Technically process the RX Buffer, act on ESC code and push text to screen)
       
       rxbyte_count=0;
@@ -708,105 +819,7 @@ void main(void)
         //zx_border(INK_BLACK); //DEBUG-TIMING
         inbyte = rxdata[rxbyte_count];
         Protocol();  // process inbyte
-/*
-        if (inbyte == 0x1b) //Catch the start of ESC [  --  Need to stop Cursor movement to preserve the ESC [ sequence (drawing and deleting puts to the console)
-        {
-          ESCFlag = 1;  // no cursor moves
-        }
-       
-        //  Putting to console
-        if(inbyte >= 0x40 && inbyte <= 0x7f && inbyte != 0x5b && ESCFlag == 1)  
-        {// Catch the END of ESC [  --  Turn Cursor move ON -- Filtering [ (0x5b)
-          
-          if(inbyte == 0x6e && lastbyte == 0x36)  
-          {//Report cursor possition -- ESC [ ROW ; COLUMN R  Row and column need to be as TEXT
-            char s[2];        
 
-            cursorY = wherey();
-            cursorX = wherex();
-
-            rs232_put(0x1b);          // ESC
-            rs232_put(0x5b);          // [           
-            if(cursorY/10!=0)
-            {
-              itoa(cursorY/10,s,10);
-              rs232_put(s[0]);        // # (10s)
-            }
-            itoa(cursorY%10,s,10);
-            rs232_put(s[0]);          // # (1s)
-            rs232_put(0x3b);          // ;           
-            if(cursorX/10!=0)         // # (10s)
-            {
-              itoa(cursorX/10,s,10);
-              rs232_put(s[0]);
-            }
-            itoa(cursorX%10,s,10);    // # (1s)
-            rs232_put(s[0]);
-            rs232_put('R');           // R
-          }
-          fputc_cons(inbyte);
-          ESCFlag = 0;
-        }
-        else if (ESCFlag == 1)  //  During ESC [  --  Cursor move OFF
-        {
-          //zx_border(INK_RED);  -- DEBUG TIMING
-          fputc_cons(inbyte);
-        }
-        else if(ESCFlag == 0)  //  No ESC [  --  Cursor move ON
-        {
-          // filter input here
-          //zx_border(INK_MAGENTA);  -- DEBUG TIMING
-          if (lastbyte==0xff && inbyte==0xff)  //catch Telnet IAC drop it  --  Do we need this?
-          {
-            //fputc_cons(inbyte);
-            inbyte=0;  //reset inbyte
-          }
-          else if (inbyte == 0x09) // TAB  --  needed ??
-          {
-            //fputc_cons(0x07);  // BEEP-DEBUG
-            fputc_cons(inbyte);
-
-          }        
-          else if (inbyte == 0x0c) // Clear screen and home cursor
-          {
-            //fputc_cons(0x07);  // BEEP-DEBUG
-            fputc_cons(inbyte);
-          }
-          else if (inbyte==0x0d)  // Carriage Return
-          {  // could be left out as 0x0d triggers a new line if printed to screen
-            //fputc_cons(0x07);
-            fputc_cons(inbyte);
-            newline_attr();
-
-          }
-          else if (inbyte==0x0a)  // Line Feed  -- no nothing
-          { // DO NOTHING
-            //fputc_cons(inbyte);
-            //newline_attr();   
-            //fputc_cons(0x07);  // BEEP-DEBUG
-          }
-          else if (lastbyte==0x0d && inbyte==0x0a)  // Carriage Return && Line Feed combo
-          {
-            fputc_cons(inbyte);
-            newline_attr();          
-          }
-          else  // default output the character to the screen 
-          {
-            fputc_cons(inbyte);
-            if (7 != zx_attr(23,31))  // FIX SCROLL ISSUE
-            {
-              newline_attr();
-            }
-          }
-        }
-        else
-        {
-          printf("!!! PANIC !!! - DRAW SCREEN");
-          return;
-        }
-
-        lastbyte=inbyte;
-*/
         //QUICK keyboard check if we are reading alot so we can interupt
         
           //zx_border(INK_CYAN);  //DEBUG
