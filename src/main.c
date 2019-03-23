@@ -23,12 +23,14 @@ static unsigned char rxdata[4096], ; //  RXDATA -- 10[/] 20[/] 40[-] 80[x]  @960
 static unsigned char txdata[20], txbytes, txbyte_count; //  TX DATA -- 20
 
 static uint16_t rxbytes, rxbyte_count, rxdata_Size=4096;
+
 //ESC Code registers & variables -- Protocol()
-static uint_fast8_t ESC_Code, CSI_Code, Custom_Code;
+static uint_fast8_t   ESC_Num_Int_Size=8, ESC_Num_String_Size=8;
+static uint_fast8_t   ESC_Code, CSI_Code, Custom_Code;
 static unsigned char  ESC_Num_String[8];                      //  ESC code number string 4[X] 8[-]
-static uint8_t        ESC_Num_String_Index;                   //  Index for the ESC_Num_String
+static uint_fast8_t   ESC_Num_String_Index;                   //  Index for the ESC_Num_String
 static int            ESC_Num_Int[8];                         //  ESC code number strings as ints
-static uint8_t        ESC_Num_Int_Index,ESC_Num_Int_Counter;  //  Index for the ESC_Num_Int, Counter for processing the ESC_Num_Int
+static uint_fast8_t   ESC_Num_Int_Index,ESC_Num_Int_Counter;  //  Index for the ESC_Num_Int, Counter for processing the ESC_Num_Int
 
 
 //To Sort
@@ -238,7 +240,7 @@ void Native_Support(void)  // For pushing ESC codes which wont cause scrolling a
 
 void ESC_Num_Str2Int(void)
 {
-  if(ESC_Num_Int_Index<sizeof(ESC_Num_Int))
+  if(ESC_Num_Int_Index<ESC_Num_Int_Size)
   {
     ESC_Num_Int[ESC_Num_Int_Index] = atoi(ESC_Num_String);
     ESC_Num_Int_Index++;
@@ -267,7 +269,7 @@ void Protocol(void)
       {//ESC_Code CSI_Code SET -- Custom_Code -- set (True)
         if(inbyte >= '0' && inbyte >= '9')
         {// ESC [ ? "0-9"  -- OK Z88DK
-          if(ESC_Num_String_Index<sizeof(ESC_Num_String))
+          if(ESC_Num_String_Index < ESC_Num_String_Size)
           {
             //Push_inbyte2screen();
             fputc_cons(inbyte);
@@ -301,7 +303,7 @@ void Protocol(void)
         }
         else if(inbyte >= '0' && inbyte <= '9') 
         {// ESC [ "0-9"  -- OK Z88DK
-          if(ESC_Num_String_Index<sizeof(ESC_Num_String))
+          if(ESC_Num_String_Index < ESC_Num_String_Size)
           {
             //Push_inbyte2screen();
             fputc_cons(inbyte);
@@ -345,7 +347,7 @@ void Protocol(void)
             //Replay the ESC last code
             printf("\033[");
             ESC_Num_Int_Counter = 0;
-            while (ESC_Num_Int_Counter<ESC_Num_Int_Index)
+            while (ESC_Num_Int_Counter < ESC_Num_Int_Index)
             {
               if(ESC_Num_Int[ESC_Num_Int_Counter]/10!=0)
               {
