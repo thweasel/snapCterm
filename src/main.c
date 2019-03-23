@@ -15,13 +15,14 @@
 //#include <ulaplus.h>  //ULA Plus support
 
 
-//GLOBALS
+//Statics
 
 //Transmission TX & RX
 static unsigned char chkey, inbyte;  // deleted bytecount lastbyte -- To delete
-static unsigned char rxdata[55] ,rxbytes, rxbyte_count; //  RXDATA -- 10[/] 20[/] 40[-] 80[x]  @9600 ~18 @19200 ~50/60
+static unsigned char rxdata[4096], ; //  RXDATA -- 10[/] 20[/] 40[-] 80[x]  @9600 ~18 @19200 ~50/60
 static unsigned char txdata[20], txbytes, txbyte_count; //  TX DATA -- 20
 
+static uint16_t rxbytes, rxbyte_count, rxdata_Size=4096;
 //ESC Code registers & variables -- Protocol()
 static uint_fast8_t ESC_Code, CSI_Code, Custom_Code;
 static unsigned char  ESC_Num_String[8];                      //  ESC code number string 4[X] 8[-]
@@ -792,7 +793,7 @@ void main(void)
     {
       //zx_border(INK_WHITE);  //DEBUG-TIMING
       rxdata[0]=inbyte;         //Buffer the first character
-      rxbytes = sizeof(rxdata);
+      rxbytes = rxdata_Size;
 
       rxbyte_count=1;
       do
@@ -804,7 +805,7 @@ void main(void)
         else  //Else no character record the number of bytes we have collected
         {
           rxbytes = rxbyte_count;
-          rxbyte_count = sizeof(rxdata)+1; //kill the for loop
+          rxbyte_count = rxdata_Size+1; //kill the for loop
         }
 
       }while(++rxbyte_count<rxbytes);
