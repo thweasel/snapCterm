@@ -29,7 +29,7 @@ static uint_fast8_t   ESC_Num_Int_Size=8, ESC_Num_String_Size=8;
 static uint_fast8_t   ESC_Code, CSI_Code, Custom_Code;
 static unsigned char  ESC_Num_String[8];                      //  ESC code number string 4[X] 8[-]
 static uint_fast8_t   ESC_Num_String_Index;                   //  Index for the ESC_Num_String
-static int            ESC_Num_Int[8];                         //  ESC code number strings as ints
+static uint8_t        ESC_Num_Int[8];                         //  ESC code number strings as ints
 static uint_fast8_t   ESC_Num_Int_Index,ESC_Num_Int_Counter;  //  Index for the ESC_Num_Int, Counter for processing the ESC_Num_Int
 
 
@@ -352,6 +352,7 @@ void Protocol(void)
             ESC_Num_Int_Counter = 0;
             while (ESC_Num_Int_Counter < ESC_Num_Int_Index)
             {
+              /*
               if(ESC_Num_Int[ESC_Num_Int_Counter]/10!=0)
               {
                 itoa(ESC_Num_Int[ESC_Num_Int_Counter]/10,ESC_Num_String,10);
@@ -359,7 +360,9 @@ void Protocol(void)
               }
               itoa(ESC_Num_Int[ESC_Num_Int_Counter]%10,ESC_Num_String,10);
               fputc_cons(ESC_Num_String[0]);          // # (1s)
-
+              */
+              itoa(ESC_Num_Int[ESC_Num_Int_Counter],ESC_Num_String,10);
+              cprintf("%s",ESC_Num_String);
               fputc_cons(';');
               ESC_Num_Int_Counter++;            
             }
