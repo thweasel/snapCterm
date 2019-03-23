@@ -40,6 +40,7 @@ static int cursorX, cursorY;
 
 //Scroll fix & Attribute painting -- newline_attr() and mono()
 static unsigned char row_attr, *attr; 
+static unsigned char *RXAttr, *TXAttr;
 
 //SGR registers
 static bool_t ClashCorrection,Bold;
@@ -62,6 +63,7 @@ void ESC_CSI_6n(void)
 {//Report cursor possition -- ESC [ ROW ; COLUMN R  Row and column need to be as TEXT
   char s[2];        
 
+  *TXAttr = PAPER_GREEN;
   cursorY = wherey();
   cursorX = wherex();
 
@@ -88,6 +90,7 @@ void ESC_CSI_6n(void)
   rs232_put(s[0]);
 
   rs232_put('R');           // R
+  *TXAttr = PAPER_BLACK;
 }
 
 void DrawCursor(void)
@@ -434,7 +437,6 @@ void Protocol(void)
               */
               case 2 :  //Esc[2J	Clear entire screen	ED2
                 Native_Support();
-                cprintf("\033[J");
               break;
               default :
                 Native_Support();  //not implemented :P
@@ -658,12 +660,13 @@ void KeyReadMulti(unsigned char time_ms, unsigned char repeat)  //ACTIVE  --  TX
   if(txbytes>0 && ESC_Code==0)//ONLY TX when not RX an ESC Code.  only exception is replying to ESC[6n function
   {
       //zx_border(INK_YELLOW);  //DEBUG-TIMING
+      *TXAttr = PAPER_GREEN;
       txbyte_count = 0;
       do
       {
         rs232_put(txdata[txbyte_count]);
       }while(++txbyte_count<txbytes);
-
+      *TXAttr = PAPER_BLACK;
       txbytes = 0;
       txdata[0]=NULL;
   }
@@ -750,9 +753,13 @@ void title(void)
 
 void main(void)
 {
-  //Init globals clean
+  //Init statics clean
+
   ExtendKeyFlag=0;
   CursorFlag=0;
+  
+  RXAttr = zx_cyx2aaddr(0,30);
+  TXAttr = zx_cyx2aaddr(1,30);
 
   ESC_Code=0;
   CSI_Code=0;
@@ -764,8 +771,8 @@ void main(void)
   ClashCorrection = False;
 
   // quick initalise serial port
-  //rs232_params(RS_BAUD_9600|RS_STOP_1|RS_BITS_8,RS_PAR_NONE);  //  Works solid
-  rs232_params(RS_BAUD_19200|RS_STOP_1|RS_BITS_8,RS_PAR_NONE);   //  Make sure to set your Serial port correctly!
+  rs232_params(RS_BAUD_9600|RS_STOP_1|RS_BITS_8,RS_PAR_NONE);  //  Works solid
+  //rs232_params(RS_BAUD_19200|RS_STOP_1|RS_BITS_8,RS_PAR_NONE);   //  Make sure to set your Serial port correctly!
   //rs232_params(RS_BAUD_38400|RS_STOP_1|RS_BITS_8,RS_PAR_NONE);
   
   rs232_init();
@@ -791,12 +798,16 @@ void main(void)
 
     //RXDATA  --  move to function?
 
+
     if(rs232_get(&inbyte)!=RS_ERR_NO_DATA)  //any incoming data capture and print
     {
       //zx_border(INK_WHITE);  //DEBUG-TIMING
+      
+
       rxdata[0]=inbyte;         //Buffer the first character
       rxbytes = rxdata_Size;
-
+      
+      *RXAttr = PAPER_RED;
       rxbyte_count=1;
       do
       {
@@ -811,7 +822,7 @@ void main(void)
         }
 
       }while(++rxbyte_count<rxbytes);
-
+      *RXAttr = PAPER_BLACK;
       //DRAW SCREEN  (Technically process the RX Buffer, act on ESC code and push text to screen)
       
       rxbyte_count=0;
