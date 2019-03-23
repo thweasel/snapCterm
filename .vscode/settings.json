@@ -12,5 +12,6 @@
         "types.h": "c",
         "sound.h": "c",
         "bit.h": "c"
-    }
+    },
+    "C_Cpp.errorSquiggles": "Disabled"
 }

@@ -35,7 +35,7 @@ static uint_fast8_t   ESC_Num_Int_Index,ESC_Num_Int_Counter;  //  Index for the 
 
 //To Sort
 static unsigned char *CursorAddr;
-static uint_fast8_t ExtendKeyFlag, CursorFlag, CursorMask, MonoFlag, KlassCorrectFlag;  // deleted - ESCFlag -
+static uint_fast8_t ExtendKeyFlag, CursorFlag, CursorMask, MonoFlag, KlashCorrectToggle;  // deleted - ESCFlag -
 static int cursorX, cursorY;  
 
 //Scroll fix & Attribute painting -- newline_attr() and mono()
@@ -332,41 +332,44 @@ void Protocol(void)
           ESC_Num_Str2Int();
           fputc_cons(inbyte);
 
-          //Reverse colour clash correction
-          if (ClashCorrection)
-          { 
-            ClashCorrection = False;             
+          if(KlashCorrectToggle == 1)
+          {//Reverse colour clash correction   
             
-            //  This table reverses the colour clash must match "Colour Clash correction Table"
-            if      (ForegroundColour ==37) {cprintf("\033[0;1;30;40m");   Bold=1; ForegroundColour=30; BackgroundColour=40;}    //Black
-            //else if (ForegroundColour ==35) {cprintf("\033[31m");   ForegroundColour=31;}      //Red
-            //else if (ForegroundColour ==33) {cprintf("\033[32m");   ForegroundColour=32;}      //Green
-            //else if (ForegroundColour ==37) {cprintf("\033[33m");   ForegroundColour=33;}      //Yellow
-            else if (ForegroundColour ==36) {cprintf("\033[0;1;34;44m");   Bold=1; ForegroundColour=34; BackgroundColour=44;}      //Blue
-            //else if (ForegroundColour ==37) {cprintf("\033[35m");   ForegroundColour=35;}      //Magenta
-            //else if (ForegroundColour ==37) {cprintf("\033[1;36m"); Bold=1; ForegroundColour=36;}    //Cyan
-            //else if (ForegroundColour ==37) {cprintf("\033[37m");   ForegroundColour=37;}      //White
+            if (ClashCorrection)
+            { 
+              ClashCorrection = False;             
+              
+              //  This table reverses the colour clash must match "Colour Clash correction Table"
+              if      (ForegroundColour ==37) {cprintf("\033[0;1;30;40m");   Bold=1; ForegroundColour=30; BackgroundColour=40;}    //Black
+              //else if (ForegroundColour ==35) {cprintf("\033[31m");   ForegroundColour=31;}      //Red
+              //else if (ForegroundColour ==33) {cprintf("\033[32m");   ForegroundColour=32;}      //Green
+              //else if (ForegroundColour ==37) {cprintf("\033[33m");   ForegroundColour=33;}      //Yellow
+              else if (ForegroundColour ==36) {cprintf("\033[0;1;34;44m");   Bold=1; ForegroundColour=34; BackgroundColour=44;}      //Blue
+              //else if (ForegroundColour ==37) {cprintf("\033[35m");   ForegroundColour=35;}      //Magenta
+              //else if (ForegroundColour ==37) {cprintf("\033[1;36m"); Bold=1; ForegroundColour=36;}    //Cyan
+              //else if (ForegroundColour ==37) {cprintf("\033[37m");   ForegroundColour=37;}      //White
 
-            //Replay the ESC last code
-            printf("\033[");
-            ESC_Num_Int_Counter = 0;
-            while (ESC_Num_Int_Counter < ESC_Num_Int_Index)
-            {
-              /*
-              if(ESC_Num_Int[ESC_Num_Int_Counter]/10!=0)
+              //Replay the ESC last code
+              printf("\033[");
+              ESC_Num_Int_Counter = 0;
+              while (ESC_Num_Int_Counter < ESC_Num_Int_Index)
               {
-                itoa(ESC_Num_Int[ESC_Num_Int_Counter]/10,ESC_Num_String,10);
-                fputc_cons(ESC_Num_String[0]);        // # (10s)
+                /*
+                if(ESC_Num_Int[ESC_Num_Int_Counter]/10!=0)
+                {
+                  itoa(ESC_Num_Int[ESC_Num_Int_Counter]/10,ESC_Num_String,10);
+                  fputc_cons(ESC_Num_String[0]);        // # (10s)
+                }
+                itoa(ESC_Num_Int[ESC_Num_Int_Counter]%10,ESC_Num_String,10);
+                fputc_cons(ESC_Num_String[0]);          // # (1s)
+                */
+                itoa(ESC_Num_Int[ESC_Num_Int_Counter],ESC_Num_String,10);
+                cprintf("%s",ESC_Num_String);
+                fputc_cons(';');
+                ESC_Num_Int_Counter++;            
               }
-              itoa(ESC_Num_Int[ESC_Num_Int_Counter]%10,ESC_Num_String,10);
-              fputc_cons(ESC_Num_String[0]);          // # (1s)
-              */
-              itoa(ESC_Num_Int[ESC_Num_Int_Counter],ESC_Num_String,10);
-              cprintf("%s",ESC_Num_String);
-              fputc_cons(';');
-              ESC_Num_Int_Counter++;            
+              fputc_cons('m');
             }
-            fputc_cons('m');
           }
 
           // Update SGR Registers
@@ -379,27 +382,29 @@ void Protocol(void)
             else if (ESC_Num_Int[ESC_Num_Int_Counter] >= 40 && ESC_Num_Int[ESC_Num_Int_Counter] <= 49 ) {BackgroundColour = ESC_Num_Int[ESC_Num_Int_Counter];}
             ESC_Num_Int_Counter++;            
           }
-       
-          //Detect Clash and Inject correction
-          if (Bold)  // Clash only occurs when Bold is used
-          {
-            if(ForegroundColour == (BackgroundColour-10))  // Clash happens when FG & BG are the same and Bold is used to Bright the Text for contrast
+
+          if(KlashCorrectToggle == 1)
+          {//Detect Clash and Inject correction
+            if (Bold)  // Clash only occurs when Bold is used
             {
-              ClashCorrection = True;  // Flag we have changed the colours to correct clash
-              
-              //  Colour Clash correction Table
-              
-              if      (ForegroundColour == 30) {cprintf("\033[0;37;40m"); Bold=0; ForegroundColour=37; BackgroundColour=40;}  //Black > White (grey)
-             // else if (ForegroundColour == 31) {cprintf("\033[35m"); ForegroundColour=35;}  //Red > Magenta
-             // else if (ForegroundColour == 32) {cprintf("\033[33m"); ForegroundColour=33;}  //Green
-             // else if (ForegroundColour == 33) {cprintf("\033[37m"); ForegroundColour=37;}  //Yellow
-              else if (ForegroundColour == 34) {cprintf("\033[0;36;44m"); Bold=0; ForegroundColour=36; BackgroundColour=44;}  //Blue
-             // else if (ForegroundColour == 35) {cprintf("\033[37m"); ForegroundColour=37;}  //Magenta
-             // else if (ForegroundColour == 36) {cprintf("\033[0;37m"); Bold=0; ForegroundColour=37;}  //Cyan
-             // else if (ForegroundColour == 37) {cprintf("\033[37m"); ForegroundColour=37;}  //White       
+              if(ForegroundColour == (BackgroundColour-10))  // Clash happens when FG & BG are the same and Bold is used to Bright the Text for contrast
+              {
+                ClashCorrection = True;  // Flag we have changed the colours to correct clash
+                
+                //  Colour Clash correction Table
+                
+                if      (ForegroundColour == 30) {cprintf("\033[0;37;40m"); Bold=0; ForegroundColour=37; BackgroundColour=40;}  //Black > White (grey)
+              // else if (ForegroundColour == 31) {cprintf("\033[35m"); ForegroundColour=35;}  //Red > Magenta
+              // else if (ForegroundColour == 32) {cprintf("\033[33m"); ForegroundColour=33;}  //Green
+              // else if (ForegroundColour == 33) {cprintf("\033[37m"); ForegroundColour=37;}  //Yellow
+                else if (ForegroundColour == 34) {cprintf("\033[0;36;44m"); Bold=0; ForegroundColour=36; BackgroundColour=44;}  //Blue
+              // else if (ForegroundColour == 35) {cprintf("\033[37m"); ForegroundColour=37;}  //Magenta
+              // else if (ForegroundColour == 36) {cprintf("\033[0;37m"); Bold=0; ForegroundColour=37;}  //Cyan
+              // else if (ForegroundColour == 37) {cprintf("\033[37m"); ForegroundColour=37;}  //White       
+              }
             }
           }
-          
+
           Protocol_Reset_All();
         }
         else if (inbyte == 'H')
@@ -571,7 +576,8 @@ void KeyReadMulti(unsigned char time_ms, unsigned char repeat)  //ACTIVE  --  TX
         {
           if      (chkey == 0x0E)   {ExtendKeyFlag=0;}                                                                                                            // Exit Extend modes      
           else if (chkey == 'c')    {ExtendKeyFlag=2;}
-          else if (chkey == 'm')    {MonoFlag++; if(MonoFlag>7){ExtendKeyFlag=0;} mono();}  //  Need to flag this out not call the function                                                                                                           // CTRL > CTRL Extend mode
+          else if (chkey == 'k')    {if (KlashCorrectToggle == 0 && MonoFlag == 0){KlashCorrectToggle=1;ExtendKeyFlag=0;} else{KlashCorrectToggle=0;ExtendKeyFlag=0;}}  // Colour Clash correction
+          else if (chkey == 'm')    {MonoFlag++; if(MonoFlag>7){ExtendKeyFlag=0;} if(KlashCorrectToggle==1){KlashCorrectToggle=0;}mono();}  //  Need to flag this out not call the function                                                                                                           // CTRL > CTRL Extend mode
           
           else if (chkey == 't')    {txdata[txbytes] = 0x09; txbytes = txbytes+1;}                                                                                // TAB key
           
@@ -772,6 +778,7 @@ void main(void)
   ESC_Num_Int_Index=0;
   ESC_Num_Int_Counter=0;
   ClashCorrection = False;
+  KlashCorrectToggle=0;
 
   // quick initalise serial port
   rs232_params(RS_BAUD_9600|RS_STOP_1|RS_BITS_8,RS_PAR_NONE);  //  Works solid
