@@ -23,16 +23,16 @@ static unsigned char rxdata[55] ,rxbytes, rxbyte_count; //  RXDATA -- 10[/] 20[/
 static unsigned char txdata[20], txbytes, txbyte_count; //  TX DATA -- 20
 
 //ESC Code registers & variables -- Protocol()
-static bool_t ESC_Code, CSI_Code, Custom_Code;
-static unsigned char  ESC_Num_String[8];   //  ESC code number string 4[X] 8[-]
-static uint8_t        ESC_Num_String_Index;      //  Index for the ESC_Num_String
-static int            ESC_Num_Int[8];                //  ESC code number strings as ints
-static uint8_t        ESC_Num_Int_Index;         //  Index for the ESC_Num_Int
-static uint8_t        ESC_Num_Int_Counter;       //  Counter for processing the ESC_Num_Int
+static uint_fast8_t ESC_Code, CSI_Code, Custom_Code;
+static unsigned char  ESC_Num_String[8];                      //  ESC code number string 4[X] 8[-]
+static uint8_t        ESC_Num_String_Index;                   //  Index for the ESC_Num_String
+static int            ESC_Num_Int[8];                         //  ESC code number strings as ints
+static uint8_t        ESC_Num_Int_Index,ESC_Num_Int_Counter;  //  Index for the ESC_Num_Int, Counter for processing the ESC_Num_Int
+
 
 //To Sort
 static unsigned char *CursorAddr;
-static uint_fast8_t ExtendKeyFlag, CursorFlag, CursorMask, MonoFlag;  // deleted - ESCFlag -
+static uint_fast8_t ExtendKeyFlag, CursorFlag, CursorMask, MonoFlag, KlassCorrectFlag;  // deleted - ESCFlag -
 static int cursorX, cursorY;  
 
 //Scroll fix & Attribute painting -- newline_attr() and mono()
@@ -208,9 +208,9 @@ void Push_inbyte2screen(void)
 
 void Protocol_Reset_All(void)  //  To be called at end of ESC code processing
 {
-  ESC_Code = False;
-  CSI_Code = False;
-  Custom_Code = False;
+  ESC_Code = 0;
+  CSI_Code = 0;
+  Custom_Code = 0;
   
   if (ESC_Num_String_Index > 0)
   {
@@ -258,11 +258,11 @@ void ESC_Num_Str2Int(void)
 
 void Protocol(void)
 {
-  if (ESC_Code) // 0x1b ESC
+  if (ESC_Code==1) // 0x1b ESC
   {// ESC_Code -- set (True)    
-    if (CSI_Code) // 0x5b [ (CSI)
+    if (CSI_Code==1) // 0x5b [ (CSI)
     {// ESC_Code CSI_Code -- set
-      if (Custom_Code) // 0x3b ? (Custom)
+      if (Custom_Code==1) // 0x3b ? (Custom)
       {//ESC_Code CSI_Code SET -- Custom_Code -- set (True)
         if(inbyte >= '0' && inbyte >= '9')
         {// ESC [ ? "0-9"  -- OK Z88DK
@@ -294,7 +294,7 @@ void Protocol(void)
       {//ESC_Code CSI_Code SET -- Custom_Code -- not set (False)
         if(inbyte == 0x3f) 
         {// ESC [ ? -- Custom Code
-          Custom_Code = True;
+          Custom_Code = 1;
           fputc_cons(inbyte);
           //Push_inbyte2screen();
         }
@@ -488,7 +488,7 @@ void Protocol(void)
     {// ESC_Code CSI_Code -- not set (False)
       if(inbyte == 0x5b) //  [ 
       {// Set -- CSI_Code True 
-        CSI_Code = True;
+        CSI_Code = 1;
         fputc_cons(inbyte);
         //Push_inbyte2screen();
       }   
@@ -506,7 +506,7 @@ void Protocol(void)
   {// ESC_Code -- not set (False)
     if (inbyte == 0x1b) // ESC
     {// Set -- ESC_Code True
-      ESC_Code = True;
+      ESC_Code = 1;
       fputc_cons(inbyte);
       //Push_inbyte2screen();
     }
@@ -627,21 +627,20 @@ void KeyReadMulti(unsigned char time_ms, unsigned char repeat)  //ACTIVE  --  TX
 
       switch(ExtendKeyFlag)
       {
-        case 0 :
+        case 0 :    // Normal
           zx_border(INK_BLACK);
         break;
-        case 1 :
+        case 1 :    // Extended
           zx_border(INK_GREEN);
         break;
-        case 2 :
+        case 2 :    // CTRL + 
           zx_border(INK_CYAN);
         break;
-        default :
+        default :   // ERROR
           zx_border(INK_MAGENTA);
           ExtendKeyFlag=0;
         break;
       }
-
       chkey = NULL;
     }
     else 
@@ -653,7 +652,7 @@ void KeyReadMulti(unsigned char time_ms, unsigned char repeat)  //ACTIVE  --  TX
 
   //zx_border(INK_WHITE);  //DEBUG-TIMING
 
-  if(txbytes>0 && !ESC_Code)//ONLY TX when not RX an ESC Code.  only exception is replying to ESC[6n function
+  if(txbytes>0 && ESC_Code==0)//ONLY TX when not RX an ESC Code.  only exception is replying to ESC[6n function
   {
       //zx_border(INK_YELLOW);  //DEBUG-TIMING
       txbyte_count = 0;
@@ -752,9 +751,9 @@ void main(void)
   ExtendKeyFlag=0;
   CursorFlag=0;
 
-  ESC_Code=False;
-  CSI_Code=False;
-  Custom_Code=False;
+  ESC_Code=0;
+  CSI_Code=0;
+  Custom_Code=0;
 
   ESC_Num_String_Index=0;
   ESC_Num_Int_Index=0;
