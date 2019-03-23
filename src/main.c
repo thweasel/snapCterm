@@ -43,7 +43,7 @@ static unsigned char row_attr, *attr;
 static unsigned char *RXAttr, *TXAttr;
 
 //SGR registers
-static uint_fast8_t ClashCorrection, Bold, ForegroundColour, BackgroundColour;
+static uint_fast8_t ClashCorrection, Bold, Inverse, ForegroundColour, BackgroundColour;
 
 
 //Font stuff
@@ -375,8 +375,10 @@ void Protocol(void)
           ESC_Num_Int_Counter=0;
           while (ESC_Num_Int_Counter < ESC_Num_Int_Index)
           {
-            if      (ESC_Num_Int[ESC_Num_Int_Counter] == 0) {Bold = 0; ForegroundColour=37; BackgroundColour=40;}  // Reset all
-            else if (ESC_Num_Int[ESC_Num_Int_Counter] == 1) {Bold = 1;}   // Set Bold (Bright)       
+            if      (ESC_Num_Int[ESC_Num_Int_Counter] == 0) {Bold = 0; ForegroundColour=37; BackgroundColour=40;if(Inverse==1){cprintf("\033[27m");Inverse=0;}}  // Reset all & inverse if needed
+            else if (ESC_Num_Int[ESC_Num_Int_Counter] == 1) {Bold = 1;}   // Set Bold (Bright)  
+            else if (ESC_Num_Int[ESC_Num_Int_Counter] == 7)  {Inverse = 1;} 
+            else if (ESC_Num_Int[ESC_Num_Int_Counter] == 27) {Inverse = 0;}     
             else if (ESC_Num_Int[ESC_Num_Int_Counter] >= 30 && ESC_Num_Int[ESC_Num_Int_Counter] <= 39 ) {ForegroundColour = ESC_Num_Int[ESC_Num_Int_Counter];}
             else if (ESC_Num_Int[ESC_Num_Int_Counter] >= 40 && ESC_Num_Int[ESC_Num_Int_Counter] <= 49 ) {BackgroundColour = ESC_Num_Int[ESC_Num_Int_Counter];}
             ESC_Num_Int_Counter++;            
