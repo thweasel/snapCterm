@@ -43,8 +43,7 @@ static unsigned char row_attr, *attr;
 static unsigned char *RXAttr, *TXAttr;
 
 //SGR registers
-static bool_t ClashCorrection,Bold;
-static uint8_t ForegroundColour, BackgroundColour;
+static uint_fast8_t ClashCorrection, Bold, ForegroundColour, BackgroundColour;
 
 
 //Font stuff
@@ -335,9 +334,9 @@ void Protocol(void)
           if(KlashCorrectToggle == 1)
           {//Reverse colour clash correction   
             
-            if (ClashCorrection)
+            if (ClashCorrection == 1)
             { 
-              ClashCorrection = False;             
+              ClashCorrection = 0;             
               
               //  This table reverses the colour clash must match "Colour Clash correction Table"
               if      (ForegroundColour ==37) {cprintf("\033[0;1;30;40m");   Bold=1; ForegroundColour=30; BackgroundColour=40;}    //Black
@@ -376,8 +375,8 @@ void Protocol(void)
           ESC_Num_Int_Counter=0;
           while (ESC_Num_Int_Counter < ESC_Num_Int_Index)
           {
-            if      (ESC_Num_Int[ESC_Num_Int_Counter] == 0) {Bold = False; ForegroundColour=37; BackgroundColour=40;}  // Reset all
-            else if (ESC_Num_Int[ESC_Num_Int_Counter] == 1) {Bold = True;}   // Set Bold (Bright)       
+            if      (ESC_Num_Int[ESC_Num_Int_Counter] == 0) {Bold = 0; ForegroundColour=37; BackgroundColour=40;}  // Reset all
+            else if (ESC_Num_Int[ESC_Num_Int_Counter] == 1) {Bold = 1;}   // Set Bold (Bright)       
             else if (ESC_Num_Int[ESC_Num_Int_Counter] >= 30 && ESC_Num_Int[ESC_Num_Int_Counter] <= 39 ) {ForegroundColour = ESC_Num_Int[ESC_Num_Int_Counter];}
             else if (ESC_Num_Int[ESC_Num_Int_Counter] >= 40 && ESC_Num_Int[ESC_Num_Int_Counter] <= 49 ) {BackgroundColour = ESC_Num_Int[ESC_Num_Int_Counter];}
             ESC_Num_Int_Counter++;            
@@ -385,11 +384,11 @@ void Protocol(void)
 
           if(KlashCorrectToggle == 1)
           {//Detect Clash and Inject correction
-            if (Bold)  // Clash only occurs when Bold is used
+            if (Bold == 1)  // Clash only occurs when Bold is used
             {
               if(ForegroundColour == (BackgroundColour-10))  // Clash happens when FG & BG are the same and Bold is used to Bright the Text for contrast
               {
-                ClashCorrection = True;  // Flag we have changed the colours to correct clash
+                ClashCorrection = 1;  // Flag we have changed the colours to correct clash
                 
                 //  Colour Clash correction Table
                 
@@ -777,7 +776,7 @@ void main(void)
   ESC_Num_String_Index=0;
   ESC_Num_Int_Index=0;
   ESC_Num_Int_Counter=0;
-  ClashCorrection = False;
+  ClashCorrection = 0;
   KlashCorrectToggle=0;
 
   // quick initalise serial port
@@ -796,7 +795,7 @@ void main(void)
   cprintf("\033[37;40m");  // esc [ ESC SEQUENCE (Foreground)White;(Background)Black m (to terminate)
   ForegroundColour = 37;
   BackgroundColour = 40;
-  Bold = False;
+  Bold = 0;
 
   //title();  //  -- TITLE --  
   //demotitle();
