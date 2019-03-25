@@ -43,7 +43,7 @@ static unsigned char row_attr, *attr;
 static unsigned char *RXAttr, *TXAttr;
 
 //SGR registers
-static uint_fast8_t ClashCorrection, Bold, Inverse,BlinkSlow, BlinkFast, ForegroundColour, BackgroundColour;
+static uint_fast8_t ClashCorrection, Bold, Inverse, BlinkSlow, BlinkFast, ForegroundColour, BackgroundColour;
 
 
 //Font stuff
@@ -337,7 +337,7 @@ void Protocol(void)
             if (ClashCorrection == 1)
             { 
               ClashCorrection = 0;             
-              cprintf("\033[%d;%d;%dm",Bold,ForegroundColour,BackgroundColour);
+              cprintf("\033[%d;%d;%d;%d;%d;%dm",Bold,BlinkSlow,BlinkFast,Inverse,ForegroundColour,BackgroundColour);
 
               //Replay the ESC last code
               printf("\033[");
@@ -594,7 +594,7 @@ void KeyReadMulti(unsigned char time_ms, unsigned char repeat)  //ACTIVE  --  TX
           
           else if (chkey == 'u')    {txdata[txbytes] = 0x1b; txdata[txbytes+1] = 0x5b; txdata[txbytes+2] = '5'; txdata[txbytes+3] = '~'; txbytes = txbytes+4;}    // Page UP
           else if (chkey == 'd')    {txdata[txbytes] = 0x1b; txdata[txbytes+1] = 0x5b; txdata[txbytes+2] = '6'; txdata[txbytes+3] = '~'; txbytes = txbytes+4;}    // Page DOWN
-          
+          else if (chkey == 'r')    {;}    // RESET
           
           //CURSOR
           else if (chkey == 0x08)   {txdata[txbytes] = 0x1b; txdata[txbytes+1] = 'O'; txdata[txbytes+2] = 'D'; txbytes = txbytes+3;}                              // Cursor key LEFT      
@@ -768,6 +768,8 @@ void title(void)
     newline_attr();
   }while(--titlescroll!=0);
 }
+
+
 
 void main(void)
 {
