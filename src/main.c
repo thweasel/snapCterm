@@ -43,7 +43,7 @@ static unsigned char row_attr, *attr;
 static unsigned char *RXAttr, *TXAttr;
 
 //SGR registers
-static uint_fast8_t ClashCorrection, Bold, Inverse, ForegroundColour, BackgroundColour;
+static uint_fast8_t ClashCorrection, Bold, Inverse,BlinkSlow, BlinkFast, ForegroundColour, BackgroundColour;
 
 
 //Font stuff
@@ -337,31 +337,13 @@ void Protocol(void)
             if (ClashCorrection == 1)
             { 
               ClashCorrection = 0;             
-              
-              //  This table reverses the colour clash must match "Colour Clash correction Table"
-              if      (ForegroundColour ==37) {cprintf("\033[0;1;30;40m");   Bold=1; ForegroundColour=30; BackgroundColour=40;}    //Black
-              //else if (ForegroundColour ==35) {cprintf("\033[31m");   ForegroundColour=31;}      //Red
-              //else if (ForegroundColour ==33) {cprintf("\033[32m");   ForegroundColour=32;}      //Green
-              //else if (ForegroundColour ==37) {cprintf("\033[33m");   ForegroundColour=33;}      //Yellow
-              else if (ForegroundColour ==36) {cprintf("\033[0;1;34;44m");   Bold=1; ForegroundColour=34; BackgroundColour=44;}      //Blue
-              //else if (ForegroundColour ==37) {cprintf("\033[35m");   ForegroundColour=35;}      //Magenta
-              //else if (ForegroundColour ==37) {cprintf("\033[1;36m"); Bold=1; ForegroundColour=36;}    //Cyan
-              //else if (ForegroundColour ==37) {cprintf("\033[37m");   ForegroundColour=37;}      //White
+              cprintf("\033[%d;%d;%dm",Bold,ForegroundColour,BackgroundColour);
 
               //Replay the ESC last code
               printf("\033[");
               ESC_Num_Int_Counter = 0;
               while (ESC_Num_Int_Counter < ESC_Num_Int_Index)
               {
-                /*
-                if(ESC_Num_Int[ESC_Num_Int_Counter]/10!=0)
-                {
-                  itoa(ESC_Num_Int[ESC_Num_Int_Counter]/10,ESC_Num_String,10);
-                  fputc_cons(ESC_Num_String[0]);        // # (10s)
-                }
-                itoa(ESC_Num_Int[ESC_Num_Int_Counter]%10,ESC_Num_String,10);
-                fputc_cons(ESC_Num_String[0]);          // # (1s)
-                */
                 itoa(ESC_Num_Int[ESC_Num_Int_Counter],ESC_Num_String,10);
                 cprintf("%s",ESC_Num_String);
                 fputc_cons(';');
@@ -375,10 +357,16 @@ void Protocol(void)
           ESC_Num_Int_Counter=0;
           while (ESC_Num_Int_Counter < ESC_Num_Int_Index)
           {
-            if      (ESC_Num_Int[ESC_Num_Int_Counter] == 0) {Bold = 0; ForegroundColour=37; BackgroundColour=40;if(Inverse==1){cprintf("\033[27m");Inverse=0;}}  // Reset all & inverse if needed
-            else if (ESC_Num_Int[ESC_Num_Int_Counter] == 1) {Bold = 1;}   // Set Bold (Bright)  
-            else if (ESC_Num_Int[ESC_Num_Int_Counter] == 7)  {Inverse = 1;} 
-            else if (ESC_Num_Int[ESC_Num_Int_Counter] == 27) {Inverse = 0;}     
+            if      (ESC_Num_Int[ESC_Num_Int_Counter] == 0)   {Bold = 0; BlinkSlow = 0; BlinkFast = 0; if(Inverse==1){cprintf("\033[27m");Inverse=0;} ForegroundColour=37; BackgroundColour=40;}  // Reset all & inverse if needed  || 
+            else if (ESC_Num_Int[ESC_Num_Int_Counter] == 1)   {Bold = 1;}     // Set Bold (Bright)  
+            else if (ESC_Num_Int[ESC_Num_Int_Counter] == 2)   {Bold = 0;}     // Set Faint
+            else if (ESC_Num_Int[ESC_Num_Int_Counter] == 5)   {BlinkSlow = 0;} 
+            else if (ESC_Num_Int[ESC_Num_Int_Counter] == 6)   {BlinkFast = 0;} 
+            else if (ESC_Num_Int[ESC_Num_Int_Counter] == 7)   {Inverse = 1;} 
+            else if (ESC_Num_Int[ESC_Num_Int_Counter] == 21)  {Bold = 0;}
+            else if (ESC_Num_Int[ESC_Num_Int_Counter] == 22)  {Bold = 0;}     // Normal intensity (rest Faint and Bold)
+            else if (ESC_Num_Int[ESC_Num_Int_Counter] == 25)  {BlinkSlow = 0; BlinkFast =0;}
+            else if (ESC_Num_Int[ESC_Num_Int_Counter] == 27)  {Inverse = 0;}     
             else if (ESC_Num_Int[ESC_Num_Int_Counter] >= 30 && ESC_Num_Int[ESC_Num_Int_Counter] <= 39 ) {ForegroundColour = ESC_Num_Int[ESC_Num_Int_Counter];}
             else if (ESC_Num_Int[ESC_Num_Int_Counter] >= 40 && ESC_Num_Int[ESC_Num_Int_Counter] <= 49 ) {BackgroundColour = ESC_Num_Int[ESC_Num_Int_Counter];}
             ESC_Num_Int_Counter++;            
@@ -391,17 +379,37 @@ void Protocol(void)
               if(ForegroundColour == (BackgroundColour-10))  // Clash happens when FG & BG are the same and Bold is used to Bright the Text for contrast
               {
                 ClashCorrection = 1;  // Flag we have changed the colours to correct clash
-                
                 //  Colour Clash correction Table
-                
-                if      (ForegroundColour == 30) {cprintf("\033[0;37;40m"); Bold=0; ForegroundColour=37; BackgroundColour=40;}  //Black > White (grey)
-              // else if (ForegroundColour == 31) {cprintf("\033[35m"); ForegroundColour=35;}  //Red > Magenta
-              // else if (ForegroundColour == 32) {cprintf("\033[33m"); ForegroundColour=33;}  //Green
-              // else if (ForegroundColour == 33) {cprintf("\033[37m"); ForegroundColour=37;}  //Yellow
-                else if (ForegroundColour == 34) {cprintf("\033[0;36;44m"); Bold=0; ForegroundColour=36; BackgroundColour=44;}  //Blue
-              // else if (ForegroundColour == 35) {cprintf("\033[37m"); ForegroundColour=37;}  //Magenta
-              // else if (ForegroundColour == 36) {cprintf("\033[0;37m"); Bold=0; ForegroundColour=37;}  //Cyan
-              // else if (ForegroundColour == 37) {cprintf("\033[37m"); ForegroundColour=37;}  //White       
+                switch (ForegroundColour)
+                {
+                  case 30:  //BLACK   0 30 40   >>  White no bold
+                      cprintf("\033[0;37;40m");
+                    break;
+                  case 31:  //RED     1 31 41   >>  Magenta
+                      cprintf("\033[0;35;41m");
+                    break;
+                  case 32:  //GREEN   2 32 42   >>  Cyan
+                      cprintf("\033[0;36;42m");
+                    break;
+                  case 33:  //YELLOW  3 33 43   >>  White Bold
+                      cprintf("\033[1;37;43m");
+                    break;
+                  case 34:  //BLUE    4 34 44   >>  Cyan
+                      cprintf("\033[0;36;44m");
+                    break;
+                  case 35:  //MAGENTA 5 35 45   >>  White
+                      cprintf("\033[0;37;45m");
+                    break;
+                  case 36:  //CYAN    6 36 46   >>  White
+                      cprintf("\033[0;37;46m");
+                    break;
+                  case 37:  //WHITE   7 37 47   >>  Yellow Bold
+                      cprintf("\033[1;37;43m");
+                    break;
+                  default:
+                      printf("!!!ERROR!!! -- Switch statement in KlashCorrection");
+                    break;
+                }
               }
             }
           }
@@ -779,7 +787,7 @@ void main(void)
   ESC_Num_Int_Index=0;
   ESC_Num_Int_Counter=0;
   ClashCorrection = 0;
-  KlashCorrectToggle=0;
+  KlashCorrectToggle=1;
 
   // quick initalise serial port
   rs232_params(RS_BAUD_9600|RS_STOP_1|RS_BITS_8,RS_PAR_NONE);  //  Works solid
@@ -795,9 +803,13 @@ void main(void)
   
   //ANSI ESCAPE codes TO SET UP
   cprintf("\033[37;40m");  // esc [ ESC SEQUENCE (Foreground)White;(Background)Black m (to terminate)
+  //SGR Register setup
   ForegroundColour = 37;
   BackgroundColour = 40;
   Bold = 0;
+  Inverse = 0;
+  BlinkSlow = 0;
+  BlinkFast = 0;
 
   //title();  //  -- TITLE --  
   //demotitle();
