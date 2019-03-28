@@ -37,13 +37,13 @@ static uint_fast8_t   ESC_Num_Int_Index,ESC_Num_Int_Counter;  //  Index for the 
 static unsigned char *CursorAddr;
 static uint_fast8_t ExtendKeyFlag, CursorFlag, CursorMask, MonoFlag, KlashCorrectToggle;  // deleted - ESCFlag -
 static int cursorX, cursorY;
-static uint BaudRate = 0;
-static uint_fast8_t BaudOption = 1;  
-static uint_fast8_t RunFlag = 1;  
+static uint BaudRate;
+static uint_fast8_t BaudOption;  
+static uint_fast8_t RunFlag;  
 
 //Scroll fix & Attribute painting -- newline_attr() and mono()
 static unsigned char row_attr, *attr; 
-static unsigned char *RXAttr, *TXAttr;
+static unsigned char *RXAttr, *TXAttr, *KBAttr;
 
 //SGR registers
 static uint_fast8_t ClashCorrection, Bold, Inverse, BlinkSlow, BlinkFast, ForegroundColour, BackgroundColour;
@@ -160,6 +160,9 @@ void newline_attr(void)
     //if(MonoFlag > 0 && MonoFlag < 8)
     if(MonoFlag != 0)  // Quick but loose
     {
+      *RXAttr = MonoFlag;
+      *TXAttr = MonoFlag;
+      *KBAttr = MonoFlag;
       do
       {
         memset(attr - 31, MonoFlag, 32);
@@ -169,8 +172,11 @@ void newline_attr(void)
     }
     else 
     {
+      *RXAttr = 7;
+      *TXAttr = 7;
+      *KBAttr = 7;
       do
-      {
+      {        
         if (7 != *attr)
         memset(attr - 31, 7, 32);
         attr = zx_aaddrcup(attr);
@@ -572,7 +578,7 @@ void KeyReadMulti(unsigned char time_ms, unsigned char repeat)  //ACTIVE  --  TX
   //txbytes = 0;
   //txdata[0]=NULL;
   //zx_border(INK_YELLOW);  //  DEBUG-TIMING
- 
+  *KBAttr = PAPER_CYAN;
   do
   {
     if(time_ms>0)
@@ -684,6 +690,7 @@ void KeyReadMulti(unsigned char time_ms, unsigned char repeat)  //ACTIVE  --  TX
       repeat = 1;
     }  
   }while(--repeat!=0);
+  *KBAttr = PAPER_BLACK;
 
   //zx_border(INK_WHITE);  //DEBUG-TIMING
 
@@ -799,8 +806,9 @@ void Reset(void)
   ExtendKeyFlag=0;
   CursorFlag=0;
   
-  RXAttr = zx_cyx2aaddr(0,30);
-  TXAttr = zx_cyx2aaddr(1,30);
+  RXAttr = zx_cyx2aaddr(0,31);
+  TXAttr = zx_cyx2aaddr(1,31);
+  KBAttr = zx_cyx2aaddr(2,31);
 
   ESC_Code=0;
   CSI_Code=0;
