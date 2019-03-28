@@ -4,6 +4,15 @@
         "conio.h": "c",
         "stdio.h": "c",
         "input_zx.h": "c",
-        "stdlib.h": "c"
-    }
+        "stdlib.h": "c",
+        "ulaplus.h": "c",
+        "spectrum.h": "c",
+        "zx.h": "c",
+        "arch.h": "c",
+        "types.h": "c",
+        "sound.h": "c",
+        "bit.h": "c",
+        "rs232.h": "c"
+    },
+    "C_Cpp.errorSquiggles": "Disabled"
 }
