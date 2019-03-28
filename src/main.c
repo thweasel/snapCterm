@@ -22,7 +22,7 @@ static unsigned char chkey, inbyte;  // deleted bytecount lastbyte -- To delete
 static unsigned char rxdata[4096], ; //  RXDATA -- 10[/] 20[/] 40[-] 80[x]  @9600 ~18 @19200 ~50/60
 static unsigned char txdata[20], txbytes, txbyte_count; //  TX DATA -- 20
 
-static uint16_t rxbytes, rxbyte_count, rxdata_Size=4096;
+static uint16_t rxbytes, rxbyte_count, rxdata_Size;
 
 //ESC Code registers & variables -- Protocol()
 static uint_fast8_t   ESC_Num_Int_Size=8, ESC_Num_String_Size=8;
@@ -36,7 +36,9 @@ static uint_fast8_t   ESC_Num_Int_Index,ESC_Num_Int_Counter;  //  Index for the 
 //To Sort
 static unsigned char *CursorAddr;
 static uint_fast8_t ExtendKeyFlag, CursorFlag, CursorMask, MonoFlag, KlashCorrectToggle;  // deleted - ESCFlag -
-static int cursorX, cursorY;  
+static int cursorX, cursorY;
+static uint BaudRate = 0;
+static uint_fast8_t BaudOption = 1;  
 
 //Scroll fix & Attribute painting -- newline_attr() and mono()
 static unsigned char row_attr, *attr; 
@@ -150,7 +152,7 @@ void ClearCursor(void)  // Call this when not putting none printing characters o
   if(CursorFlag==1) {DrawCursor();}
 }
 
-void newline_attr()
+void newline_attr(void)
 {//Allen Albright's method  -- Extended to cover MONO mode
     row_attr = 23;
     attr = zx_cyx2aaddr(23,31);
@@ -176,7 +178,7 @@ void newline_attr()
     }
 }
 
-void mono()   //Sweep the screen with mono attribute
+void mono(void)   //Sweep the screen with mono attribute
 {
     if(MonoFlag > 0 && MonoFlag < 8)
     {
@@ -191,6 +193,14 @@ void mono()   //Sweep the screen with mono attribute
     }
     else {MonoFlag=0;}
 }
+
+void ToggleMono(void)
+{
+  MonoFlag++; 
+  if(MonoFlag>7)              {ExtendKeyFlag=0;} 
+  if(KlashCorrectToggle==1)   {KlashCorrectToggle=0;}
+  mono();
+} 
 
 void Push_inbyte2screen(void)
 {
@@ -586,7 +596,7 @@ void KeyReadMulti(unsigned char time_ms, unsigned char repeat)  //ACTIVE  --  TX
           if      (chkey == 0x0E)   {ExtendKeyFlag=0;}                                                                                                            // Exit Extend modes      
           else if (chkey == 'c')    {ExtendKeyFlag=2;}
           else if (chkey == 'k')    {if (KlashCorrectToggle == 0 && MonoFlag == 0){KlashCorrectToggle=1;ExtendKeyFlag=0;} else{KlashCorrectToggle=0;ExtendKeyFlag=0;}}  // Colour Clash correction
-          else if (chkey == 'm')    {MonoFlag++; if(MonoFlag>7){ExtendKeyFlag=0;} if(KlashCorrectToggle==1){KlashCorrectToggle=0;}mono();}  //  Need to flag this out not call the function                                                                                                           // CTRL > CTRL Extend mode
+          else if (chkey == 'm')    {ToggleMono();}  //  Need to flag this out not call the function                                                                                                           // CTRL > CTRL Extend mode
           
           else if (chkey == 't')    {txdata[txbytes] = 0x09; txbytes = txbytes+1;}                                                                                // TAB key
           
@@ -691,7 +701,6 @@ void KeyReadMulti(unsigned char time_ms, unsigned char repeat)  //ACTIVE  --  TX
   //zx_border(INK_BLACK);  //DEBUG-TIMING
 }
 
-
 void demotitle(void)
 { 
   char titlescroll = 24;
@@ -726,13 +735,14 @@ void demotitle(void)
   printf("               - Join us on Facebook - Z88DK ZX Spectrum user group -   \n\n\033[1m\033[37;40m");
   printf("                        -\\/\\/\\- ANY KEY TO CONTINUE -/\\/\\/- \033[37;40m");
   in_WaitForKey();
+  void=getk();
   do
   {
     printf("\r");  
     newline_attr();
   }while(--titlescroll!=0);
 }
-
+/*
 void title(void)
 { 
   char titlescroll = 24;
@@ -768,13 +778,110 @@ void title(void)
     newline_attr();
   }while(--titlescroll!=0);
 }
+*/
+void Draw_Menu()
+{
+  cprintf("\033[2J\033[0m");
+  cprintf("       snapCterm -- menu\n");
+  cprintf("\n1 - Baud :  4800    9600    19200   38400  > %u",BaudRate);
+  cprintf("\n2 - Buffer size Small / Big                > "); if(rxdata_Size==18){cprintf("Small (%u bytes)",rxdata_Size);}else{cprintf("BIG (%u bytes)",rxdata_Size);}
+  cprintf("\n3 - Clash correction  ON / OFF             > "); if(KlashCorrectToggle == 1){cprintf("ON");}  else{cprintf("OFF");}
+  cprintf("\n4 - Mono mode OFF 1 2 3 4 5 6 7            > "); if(MonoFlag==0){cprintf("ON");} else{cprintf("%d",MonoFlag);}
+  cprintf("\n5 - HELP!");
+  cprintf("\n6 - Phonebook");
+  cprintf("\n\n   Space bar - ! GO TERMINAL ! \n");
+}
 
+void menu(void)
+{
+  Draw_Menu();
 
+  do
+  {
+    in_WaitForKey();
+    chkey = NULL;
+    chkey=getk();
+    if(chkey != NULL)
+    {
+      keyboard_click();
+      //cprintf("\n%x",chkey);
+      switch (chkey)
+      {
+        case '31': // Baud rate     
+          BaudOption++;
+          switch (BaudOption)
+          {
+            case 1:
+              BaudRate = 4800;
+              break;
+            case 2:
+              BaudRate = 9600;
+              break;
+            case 3:
+              BaudRate = 19200;
+              break;
+            case 4:
+              BaudRate = 38400;
+              break;          
+            default:
+              BaudRate = 4800;
+              BaudOption = 1;
+              break;
+          }
+          gotoxy(44,2);
+          printf("\033[K %u",BaudRate);
+          break;
+        case '32': // Buffer size
+          if (rxdata_Size==4096){rxdata_Size=18;}else{rxdata_Size=4096;}
+          gotoxy(44,3);
+          cprintf("\033[K ");
+          if(rxdata_Size==18){cprintf("Small (%u bytes)",rxdata_Size);}else{cprintf("BIG (%u bytes)",rxdata_Size);}
+          break;
+        case '33': // Clash corrections
+          gotoxy(44,4);
+          cprintf("\033[K ");
+          if(KlashCorrectToggle == 0) {KlashCorrectToggle=1; cprintf("ON");} else {KlashCorrectToggle=0; cprintf("OFF");}          
+          break;
+        case '34': // Mono mode
+          ToggleMono();
+          gotoxy(44,5);
+          cprintf("\033[K ");
+          if(MonoFlag==0){cprintf("ON");} else{cprintf("\033[K %d",MonoFlag);}
+          mono();
+          break;
+        case '35': // HELP!
+          gotoxy(44,6);
+          cprintf("\033[K Help");
+          
+          Draw_Menu();
+          break; 
+        case '36': // Phonebook
+          gotoxy(44,7);
+          cprintf("\033[K Phonebook");
+          
+          Draw_Menu();
+          break;                                        
+      
+        default:
+          gotoxy(0,20);
+          cprintf("\033[K*Keycode* - %d",chkey);
+          break;
+        
+       
+      } 
+      mono();
+    }
+  }while (chkey != 32);    // Space key
+  clrscr();
+  cprintf("\07");
+  chkey=NULL;
+}
 
 void main(void)
 {
   //Init statics clean
 
+  BaudRate = 4800;
   ExtendKeyFlag=0;
   CursorFlag=0;
   
@@ -791,12 +898,15 @@ void main(void)
   ClashCorrection = 0;
   KlashCorrectToggle=1;
 
-  // quick initalise serial port
-  rs232_params(RS_BAUD_9600|RS_STOP_1|RS_BITS_8,RS_PAR_NONE);  //  Works solid
-  //rs232_params(RS_BAUD_19200|RS_STOP_1|RS_BITS_8,RS_PAR_NONE);   //  Make sure to set your Serial port correctly!
-  //rs232_params(RS_BAUD_38400|RS_STOP_1|RS_BITS_8,RS_PAR_NONE);
-  
-  rs232_init();
+  rxdata_Size=4096;
+  rxbytes=0;
+  rxbyte_count=0;
+
+  txbytes=0;
+  txbyte_count=0;
+
+
+
 
   // Clean up the screen
   zx_border(INK_BLACK);
@@ -814,20 +924,24 @@ void main(void)
   BlinkFast = 0;
 
   //title();  //  -- TITLE --  
-  //demotitle();
+  demotitle();
 
+  menu();
+
+  // quick initalise serial port
+  rs232_params(RS_BAUD_9600|RS_STOP_1|RS_BITS_8,RS_PAR_NONE);  //  Works solid
+  //rs232_params(RS_BAUD_19200|RS_STOP_1|RS_BITS_8,RS_PAR_NONE);   //  Make sure to set your Serial port correctly!
+  //rs232_params(RS_BAUD_38400|RS_STOP_1|RS_BITS_8,RS_PAR_NONE);
+  
+  rs232_init();
   while(1)  // MAIN PROGRAM LOOP
   {
-
     DrawCursor();
 
     //RXDATA  --  move to function?
-
-
     if(rs232_get(&inbyte)!=RS_ERR_NO_DATA)  //any incoming data capture and print
     {
       //zx_border(INK_WHITE);  //DEBUG-TIMING
-      
 
       rxdata[0]=inbyte;         //Buffer the first character
       rxbytes = rxdata_Size;
