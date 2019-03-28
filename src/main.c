@@ -734,7 +734,7 @@ void demotitle(void)
   printf("                             |_|                                       \r");
   printf("\n");
   printf("\033[1m\033[31;40m");
-  printf("                         !  -  PRE - ALPHA - VERSION - !       \n\n\n");
+  printf("                              ! - BETA - VERSION - !       \n\n\n");
   printf("\033[1m\033[33;40m");
   printf("    BY: Owen Reynolds 2018                      \n\n");
   printf("CREDIT: Thomas Cherryhomes @ IRATA.ONLINE       \n\n");
@@ -770,7 +770,7 @@ void title(void)
   printf("                             |_|                                       \r");
   printf("\n");
   printf("\033[1m\033[31;40m");
-  printf("                         !  -  PRE - ALPHA - VERSION - !       \n\n\n");
+  printf("                              ! - BETA - VERSION - !       \n\n\n");
   printf("\033[1m\033[33;40m");
   printf("    BY: Owen Reynolds 2018                      \n\n");
   printf("CREDIT: Thomas Cherryhomes @ IRATA.ONLINE       \n\n");
@@ -792,7 +792,7 @@ void title(void)
 void Help()
 {
   cprintf("\033[2J\033[0m");
-  cprintf("\n\nTo toggle the extend mode press and hold Symbol Shift and tap Caps Shift,\n the border will change from black to green. \n Extend mode keys interpret as below.");
+  cprintf("\n\nTo toggle the extend mode press and hold Symbol Shift and tap Caps Shift,\nthe border will change from black to green. \nExtend mode keys interpret as below.");
   cprintf("\n\nC - CTRL Key (Control mode Cyan border)\nK - Clash correction (Toggle On/Off)\nM - Mono mode (1 > 7 > Colour mode)\nT - Tab key\nE - Escape key\nU - Page UP\nD - Page DOWN\nCursor keys (5 6 7 8) - Left, Down, Up Right\nR - Reset");
   cprintf("\n\nBlack border - Normal mode\nGreen border - Extended mode\nCyan border - CTRL+ mode");
   cprintf("\n\n  - ANY KEY TO CONTINUE - ");
@@ -886,7 +886,7 @@ void Draw_Menu(void)
   cprintf("\n3 - Clash correction  ON / OFF             > "); if(KlashCorrectToggle == 1){cprintf("ON");}  else{cprintf("OFF");}
   cprintf("\n4 - Mono mode OFF 1 2 3 4 5 6 7            > "); if(MonoFlag==0){cprintf("ON");} else{cprintf("%d",MonoFlag);}
   cprintf("\n5 - HELP!");
-  cprintf("\n6 - Phonebook");
+  //cprintf("\n6 - Phonebook");
   cprintf("\n\n   Space bar - ! GO TERMINAL ! \n");
 
 }
@@ -954,16 +954,16 @@ void menu(void)
           Help();
           Draw_Menu();
           break; 
-        case '36': // Phonebook
+ /*       case '36': // Phonebook
           gotoxy(44,7);
           cprintf("\033[K Phonebook");
           
           Draw_Menu();
           break;                                        
-      
+  */    
         default:
-          gotoxy(0,20);
-          cprintf("\033[K*Keycode* - %d",chkey);
+          //gotoxy(0,20);
+          //cprintf("\033[K*Keycode* - %d",chkey);
           break;
         
        
