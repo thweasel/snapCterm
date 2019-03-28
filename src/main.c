@@ -39,6 +39,7 @@ static uint_fast8_t ExtendKeyFlag, CursorFlag, CursorMask, MonoFlag, KlashCorrec
 static int cursorX, cursorY;
 static uint BaudRate = 0;
 static uint_fast8_t BaudOption = 1;  
+static uint_fast8_t RunFlag = 1;  
 
 //Scroll fix & Attribute painting -- newline_attr() and mono()
 static unsigned char row_attr, *attr; 
@@ -466,8 +467,9 @@ void Protocol(void)
                 Native_Support();
               break;
               default :
-                Native_Support();  //not implemented :P
-                //Esc[J	Clear screen from cursor down
+                //Esc[J	Clear screen from cursor down not implmented so botched with ESC[2J!
+                fputc_cons('2');
+                Native_Support();                
               break;
             }
         }
@@ -604,7 +606,7 @@ void KeyReadMulti(unsigned char time_ms, unsigned char repeat)  //ACTIVE  --  TX
           
           else if (chkey == 'u')    {txdata[txbytes] = 0x1b; txdata[txbytes+1] = 0x5b; txdata[txbytes+2] = '5'; txdata[txbytes+3] = '~'; txbytes = txbytes+4;}    // Page UP
           else if (chkey == 'd')    {txdata[txbytes] = 0x1b; txdata[txbytes+1] = 0x5b; txdata[txbytes+2] = '6'; txdata[txbytes+3] = '~'; txbytes = txbytes+4;}    // Page DOWN
-          else if (chkey == 'r')    {;}    // RESET
+          else if (chkey == 'r')    {RunFlag=0;}    // RESET
           
           //CURSOR
           else if (chkey == 0x08)   {txdata[txbytes] = 0x1b; txdata[txbytes+1] = 'O'; txdata[txbytes+2] = 'D'; txbytes = txbytes+3;}                              // Cursor key LEFT      
@@ -680,7 +682,7 @@ void KeyReadMulti(unsigned char time_ms, unsigned char repeat)  //ACTIVE  --  TX
     {
       zx_border(INK_RED);
       repeat = 1;
-    }    
+    }  
   }while(--repeat!=0);
 
   //zx_border(INK_WHITE);  //DEBUG-TIMING
@@ -779,7 +781,95 @@ void title(void)
   }while(--titlescroll!=0);
 }
 */
-void Draw_Menu()
+
+void Help()
+{
+  cprintf("\033[2J\033[0m");
+  cprintf("\n\nTo toggle the extend mode press and hold Symbol Shift and tap Caps Shift,\n the border will change from black to green. \n Extend mode keys interpret as below.");
+  cprintf("\n\nC - CTRL Key (Control mode Cyan border)\nK - Clash correction (Toggle On/Off)\nM - Mono mode (1 > 7 > Colour mode)\nT - Tab key\nE - Escape key\nU - Page UP\nD - Page DOWN\nCursor keys (5 6 7 8) - Left, Down, Up Right\nR - Reset");
+  cprintf("\n\nBlack border - Normal mode\nGreen border - Extended mode\nCyan border - CTRL+ mode");
+  cprintf("\n\n  - ANY KEY TO CONTINUE - ");
+  in_WaitForKey();
+}
+void Reset(void)
+{
+  RunFlag = 1;  
+  BaudOption = 2;
+  BaudRate = 9600;
+  ExtendKeyFlag=0;
+  CursorFlag=0;
+  
+  RXAttr = zx_cyx2aaddr(0,30);
+  TXAttr = zx_cyx2aaddr(1,30);
+
+  ESC_Code=0;
+  CSI_Code=0;
+  Custom_Code=0;
+
+  ESC_Num_String_Index=0;
+  ESC_Num_Int_Index=0;
+  ESC_Num_Int_Counter=0;
+  ClashCorrection = 0;
+  KlashCorrectToggle=1;
+
+  rxdata_Size=4096;
+  rxbytes=0;
+  rxbyte_count=0;
+
+  txbytes=0;
+  txbyte_count=0;
+  
+  // Clean up the screen
+  zx_border(INK_BLACK);
+  zx_colour(PAPER_BLACK|INK_WHITE);
+  clrscr();
+  
+  //ANSI ESCAPE codes TO SET UP
+  cprintf("\033[37;40m");  // esc [ ESC SEQUENCE (Foreground)White;(Background)Black m (to terminate)
+  //SGR Register setup
+  ForegroundColour = 37;
+  BackgroundColour = 40;
+  Bold = 0;
+  Inverse = 0;
+  BlinkSlow = 0;
+  BlinkFast = 0;
+
+
+}
+
+void SetPort()
+{
+  rs232_close();
+  // quick initalise serial port
+  switch (BaudOption)
+            {
+              case 1:
+                rs232_params(RS_BAUD_4800|RS_STOP_1|RS_BITS_8,RS_PAR_NONE);
+                BaudRate = 4800;
+                break;
+              case 2:
+                BaudRate = 9600;
+                rs232_params(RS_BAUD_9600|RS_STOP_1|RS_BITS_8,RS_PAR_NONE);  //  Works solid
+                break;
+              case 3:
+                BaudRate = 19200;
+                rs232_params(RS_BAUD_19200|RS_STOP_1|RS_BITS_8,RS_PAR_NONE);
+                break;
+              case 4:
+                BaudRate = 38400;
+                rs232_params(RS_BAUD_38400|RS_STOP_1|RS_BITS_8,RS_PAR_NONE);
+                break;          
+              default:
+                BaudRate = 9600;
+                rs232_params(RS_BAUD_9600|RS_STOP_1|RS_BITS_8,RS_PAR_NONE);
+                BaudOption = 2;
+                break;
+            }
+  
+  rs232_init();
+}
+
+void Draw_Menu(void)
 {
   cprintf("\033[2J\033[0m");
   cprintf("       snapCterm -- menu\n");
@@ -790,6 +880,7 @@ void Draw_Menu()
   cprintf("\n5 - HELP!");
   cprintf("\n6 - Phonebook");
   cprintf("\n\n   Space bar - ! GO TERMINAL ! \n");
+
 }
 
 void menu(void)
@@ -852,7 +943,7 @@ void menu(void)
         case '35': // HELP!
           gotoxy(44,6);
           cprintf("\033[K Help");
-          
+          Help();
           Draw_Menu();
           break; 
         case '36': // Phonebook
@@ -879,115 +970,76 @@ void menu(void)
 
 void main(void)
 {
-  //Init statics clean
-
-  BaudRate = 4800;
-  ExtendKeyFlag=0;
-  CursorFlag=0;
-  
-  RXAttr = zx_cyx2aaddr(0,30);
-  TXAttr = zx_cyx2aaddr(1,30);
-
-  ESC_Code=0;
-  CSI_Code=0;
-  Custom_Code=0;
-
-  ESC_Num_String_Index=0;
-  ESC_Num_Int_Index=0;
-  ESC_Num_Int_Counter=0;
-  ClashCorrection = 0;
-  KlashCorrectToggle=1;
-
-  rxdata_Size=4096;
-  rxbytes=0;
-  rxbyte_count=0;
-
-  txbytes=0;
-  txbyte_count=0;
-
-
-
-
-  // Clean up the screen
   zx_border(INK_BLACK);
   zx_colour(PAPER_BLACK|INK_WHITE);
   clrscr();
-  
-  //ANSI ESCAPE codes TO SET UP
-  cprintf("\033[37;40m");  // esc [ ESC SEQUENCE (Foreground)White;(Background)Black m (to terminate)
-  //SGR Register setup
-  ForegroundColour = 37;
-  BackgroundColour = 40;
-  Bold = 0;
-  Inverse = 0;
-  BlinkSlow = 0;
-  BlinkFast = 0;
-
   //title();  //  -- TITLE --  
   demotitle();
 
-  menu();
-
-  // quick initalise serial port
-  rs232_params(RS_BAUD_9600|RS_STOP_1|RS_BITS_8,RS_PAR_NONE);  //  Works solid
-  //rs232_params(RS_BAUD_19200|RS_STOP_1|RS_BITS_8,RS_PAR_NONE);   //  Make sure to set your Serial port correctly!
-  //rs232_params(RS_BAUD_38400|RS_STOP_1|RS_BITS_8,RS_PAR_NONE);
-  
-  rs232_init();
-  while(1)  // MAIN PROGRAM LOOP
+  do    // MAIN PROGRAM LOOP
   {
-    DrawCursor();
+    //Init statics clean
+    Reset();
 
-    //RXDATA  --  move to function?
-    if(rs232_get(&inbyte)!=RS_ERR_NO_DATA)  //any incoming data capture and print
+    menu();
+    
+    SetPort();
+  
+    do  // Terminal mode
     {
-      //zx_border(INK_WHITE);  //DEBUG-TIMING
+      DrawCursor();
 
-      rxdata[0]=inbyte;         //Buffer the first character
-      rxbytes = rxdata_Size;
-      
-      *RXAttr = PAPER_RED;
-      rxbyte_count=1;
-      do
+      //RXDATA  --  move to function?
+      if(rs232_get(&inbyte)!=RS_ERR_NO_DATA)  //any incoming data capture and print
       {
-        if (rs232_get(&inbyte) != RS_ERR_NO_DATA)  //If character add it to the buffer
-        {
-          rxdata[rxbyte_count]=inbyte;
-        }
-        else  //Else no character record the number of bytes we have collected
-        {
-          rxbytes = rxbyte_count;
-          rxbyte_count = rxdata_Size+1; //kill the for loop
-        }
+        //zx_border(INK_WHITE);  //DEBUG-TIMING
 
-      }while(++rxbyte_count<rxbytes);
-      *RXAttr = PAPER_BLACK;
-      //DRAW SCREEN  (Technically process the RX Buffer, act on ESC code and push text to screen)
-      
-      rxbyte_count=0;
-      do
-      {       
-        ClearCursor();  // Blank characters wont over write the cursor if its showing
-        //zx_border(INK_BLACK); //DEBUG-TIMING
-        inbyte = rxdata[rxbyte_count];
-        Protocol();  // process inbyte
-
-        //QUICK keyboard check if we are reading alot so we can interupt
+        rxdata[0]=inbyte;         //Buffer the first character
+        rxbytes = rxdata_Size;
         
-          //zx_border(INK_CYAN);  //DEBUG
-          KeyReadMulti(0,1);  // 2 Reading the keyboard here seemed to break in to ESC [ some times.
+        *RXAttr = PAPER_RED;
+        rxbyte_count=1;
+        do
+        {
+          if (rs232_get(&inbyte) != RS_ERR_NO_DATA)  //If character add it to the buffer
+          {
+            rxdata[rxbyte_count]=inbyte;
+          }
+          else  //Else no character record the number of bytes we have collected
+          {
+            rxbytes = rxbyte_count;
+            rxbyte_count = rxdata_Size+1; //kill the for loop
+          }
 
-      }while(++rxbyte_count<rxbytes);
-    }
-    else //no incoming data check keyboard
-    {
-      //zx_border(INK_RED);  // DEBUG
-      KeyReadMulti(10,30);   // 10,30
-      //KeyReadMulti(0,1);
-    }
+        }while(++rxbyte_count<rxbytes);
+        *RXAttr = PAPER_BLACK;
+        //DRAW SCREEN  (Technically process the RX Buffer, act on ESC code and push text to screen)
+        
+        rxbyte_count=0;
+        do
+        {       
+          ClearCursor();  // Blank characters wont over write the cursor if its showing
+          //zx_border(INK_BLACK); //DEBUG-TIMING
+          inbyte = rxdata[rxbyte_count];
+          Protocol();  // process inbyte
 
-    if(MonoFlag != 0 && MonoFlag != zx_attr(23,31)) {mono();} // Mono flag set, if attr in corner dont match sweep the screen
+          //QUICK keyboard check if we are reading alot so we can interupt
+          
+            //zx_border(INK_CYAN);  //DEBUG
+            KeyReadMulti(0,1);  // 2 Reading the keyboard here seemed to break in to ESC [ some times.
 
-  }
+        }while(++rxbyte_count<rxbytes);
+      }
+      else //no incoming data check keyboard
+      {
+        //zx_border(INK_RED);  // DEBUG
+        KeyReadMulti(10,30);   // 10,30
+        //KeyReadMulti(0,1);
+      }
 
+      if(MonoFlag != 0 && MonoFlag != zx_attr(23,31)) {mono();} // Mono flag set, if attr in corner dont match sweep the screen
+
+    }while(RunFlag == 1);
+  
+  } while (1==1);
 }
