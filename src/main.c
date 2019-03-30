@@ -55,9 +55,9 @@ SECTION data_user ;
 PUBLIC _oemascii
 _oemascii:
       //Files must be loaded in order of lowest value to highest
-      BINARY "./src/oemasciiext1.bin.chr" ;
-      BINARY "./src/oemasciiext2.bin.chr" ;
-      BINARY "./src/oemasciiext3.bin.chr" ;
+      BINARY "../src/oemasciiext1.bin.chr" ;
+      BINARY "../src/oemasciiext2.bin.chr" ;
+      BINARY "../src/oemasciiext3.bin.chr" ;
 #endasm
 
 
