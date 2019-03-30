@@ -1,7 +1,7 @@
-TARGET_EXEC ?= snapCterm.bin
+TARGET_EXEC ?= sCt-IF1
 
-BUILD_DIR ?= ./snapCterm-if1
-SRC_DIRS ?= ./src
+BUILD_DIR ?= ./
+SRC_DIRS ?= ../src
 
 CC=zcc
 
