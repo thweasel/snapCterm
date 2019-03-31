@@ -884,10 +884,11 @@ void Draw_Menu(void)
   cprintf("\n1 - Baud :  4800    9600    19200   38400  > %u",BaudRate);
   cprintf("\n2 - Buffer size Small / Big                > "); if(rxdata_Size==18){cprintf("Small (%u bytes)",rxdata_Size);}else{cprintf("BIG (%u bytes)",rxdata_Size);}
   cprintf("\n3 - Clash correction  ON / OFF             > "); if(KlashCorrectToggle == 1){cprintf("ON");}  else{cprintf("OFF");}
-  cprintf("\n4 - Mono mode OFF 1 2 3 4 5 6 7            > "); if(MonoFlag==0){cprintf("ON");} else{cprintf("%d",MonoFlag);}
+  cprintf("\n4 - Mono mode OFF 1 2 3 4 5 6 7            > "); if(MonoFlag==0){cprintf("OFF");} else{cprintf("%d",MonoFlag);}
   cprintf("\n5 - HELP!");
   //cprintf("\n6 - Phonebook");
   cprintf("\n\n   Space bar - ! GO TERMINAL ! \n");
+  cprintf("\n\nPress a Number to change settings");
 
 }
 
@@ -945,7 +946,7 @@ void menu(void)
           ToggleMono();
           gotoxy(44,5);
           cprintf("\033[K ");
-          if(MonoFlag==0){cprintf("ON");} else{cprintf("\033[K %d",MonoFlag);}
+          if(MonoFlag==0){cprintf("OFF");} else{cprintf("\033[K %d",MonoFlag);}
           mono();
           break;
         case '35': // HELP!
