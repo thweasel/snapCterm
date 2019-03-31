@@ -46,7 +46,7 @@ static unsigned char row_attr, *attr;
 static unsigned char *RXAttr, *TXAttr, *KBAttr;
 
 //SGR registers
-static uint_fast8_t ClashCorrection, Bold, Inverse, BlinkSlow, BlinkFast, ForegroundColour, BackgroundColour;
+static uint_fast8_t ClashCorrection, Bold, Underline, Inverse, BlinkSlow, BlinkFast, ForegroundColour, BackgroundColour;
 
 
 //Font stuff
@@ -354,7 +354,12 @@ void Protocol(void)
             if (ClashCorrection == 1)
             { 
               ClashCorrection = 0;             
-              cprintf("\033[%d;%d;%d;%d;%d;%dm",Bold,BlinkSlow,BlinkFast,Inverse,ForegroundColour,BackgroundColour);
+              cprintf("\033[%d;%d;%dm",Bold,ForegroundColour,BackgroundColour);
+              if(Underline  == 1){cprintf("\033[4m");}
+              if(BlinkSlow  == 1){cprintf("\033[5m");}
+              if(BlinkFast  == 1){cprintf("\033[6m");}
+              if(Inverse    == 1){cprintf("\033[7m");}
+              
 
               //Replay the ESC last code
               printf("\033[");
@@ -374,14 +379,16 @@ void Protocol(void)
           ESC_Num_Int_Counter=0;
           while (ESC_Num_Int_Counter < ESC_Num_Int_Index)
           {
-            if      (ESC_Num_Int[ESC_Num_Int_Counter] == 0)   {Bold = 0; BlinkSlow = 0; BlinkFast = 0; if(Inverse==1){cprintf("\033[27m");Inverse=0;} ForegroundColour=37; BackgroundColour=40;}  // Reset all & inverse if needed  || 
+            if      (ESC_Num_Int[ESC_Num_Int_Counter] == 0)   {Bold = 0; BlinkSlow = 0; BlinkFast = 0;if(Underline==1){cprintf("\033[24m");Underline=0;} if(Inverse==1){cprintf("\033[27m");Inverse=0;} ForegroundColour=37; BackgroundColour=40;}  // Reset all & inverse if needed  || 
             else if (ESC_Num_Int[ESC_Num_Int_Counter] == 1)   {Bold = 1;}     // Set Bold (Bright)  
             else if (ESC_Num_Int[ESC_Num_Int_Counter] == 2)   {Bold = 0;}     // Set Faint
-            else if (ESC_Num_Int[ESC_Num_Int_Counter] == 5)   {BlinkSlow = 0;} 
-            else if (ESC_Num_Int[ESC_Num_Int_Counter] == 6)   {BlinkFast = 0;} 
+            else if (ESC_Num_Int[ESC_Num_Int_Counter] == 4)   {Underline = 1;}
+            else if (ESC_Num_Int[ESC_Num_Int_Counter] == 5)   {BlinkSlow = 1;} 
+            else if (ESC_Num_Int[ESC_Num_Int_Counter] == 6)   {BlinkFast = 1;} 
             else if (ESC_Num_Int[ESC_Num_Int_Counter] == 7)   {Inverse = 1;} 
             else if (ESC_Num_Int[ESC_Num_Int_Counter] == 21)  {Bold = 0;}
             else if (ESC_Num_Int[ESC_Num_Int_Counter] == 22)  {Bold = 0;}     // Normal intensity (rest Faint and Bold)
+            else if (ESC_Num_Int[ESC_Num_Int_Counter] == 24)  {Underline = 0;}
             else if (ESC_Num_Int[ESC_Num_Int_Counter] == 25)  {BlinkSlow = 0; BlinkFast =0;}
             else if (ESC_Num_Int[ESC_Num_Int_Counter] == 27)  {Inverse = 0;}     
             else if (ESC_Num_Int[ESC_Num_Int_Counter] >= 30 && ESC_Num_Int[ESC_Num_Int_Counter] <= 39 ) {ForegroundColour = ESC_Num_Int[ESC_Num_Int_Counter];}
@@ -745,6 +752,7 @@ void demotitle(void)
   printf("                        -\\/\\/\\- ANY KEY TO CONTINUE -/\\/\\/- \033[37;40m");
   in_WaitForKey();
   chkey = getk();
+  chkey = getk();
   chkey=NULL;
   do
   {
@@ -798,6 +806,7 @@ void Help()
   cprintf("\n\nBlack border - Normal mode\nGreen border - Extended mode\nCyan border - CTRL+ mode");
   cprintf("\n\n  - ANY KEY TO CONTINUE - ");
   in_WaitForKey();
+  chkey = getk();
   chkey = getk();
   chkey=NULL;
 }
