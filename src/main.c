@@ -751,9 +751,12 @@ void demotitle(void)
   printf("               - Join us on Facebook - Z88DK ZX Spectrum user group -   \n\n\033[1m\033[37;40m");
   printf("                        -\\/\\/\\- ANY KEY TO CONTINUE -/\\/\\/- \033[37;40m");
   in_WaitForKey();
-  chkey = getk();
-  chkey = getk();
+  do  //  PURGE KEY BUFFER OF EVERY THING!!!
+  {
+    chkey = getk();
+  } while (chkey != NULL);
   chkey=NULL;
+
   do
   {
     printf("\r");  
@@ -806,9 +809,13 @@ void Help()
   cprintf("\n\nBlack border - Normal mode\nGreen border - Extended mode\nCyan border - CTRL+ mode");
   cprintf("\n\n  - ANY KEY TO CONTINUE - ");
   in_WaitForKey();
-  chkey = getk();
-  chkey = getk();
+  
+  do  //  PURGE KEY BUFFER OF EVERY THING!!!
+  {
+    chkey = getk();
+  } while (chkey != NULL);
   chkey=NULL;
+
 }
 void Reset(void)
 {
@@ -902,6 +909,12 @@ void Draw_Menu(void)
   cprintf("\n\n   Space bar - ! GO TERMINAL ! \n");
   cprintf("\n\nPress a Number to change settings");
 
+  do  //  PURGE KEY BUFFER OF EVERY THING!!!
+  {
+    chkey = getk();
+  } while (chkey != NULL);
+  chkey=NULL;
+
 }
 
 void menu(void)
@@ -984,6 +997,13 @@ void menu(void)
       mono();
     }
   }while (chkey != 32);    // Space key
+  
+  do  //  PURGE KEY BUFFER OF EVERY THING!!!
+  {
+    chkey = getk();
+  } while (chkey != NULL);
+  chkey=NULL;
+  
   clrscr();
   cprintf("\07");
   chkey=NULL;
