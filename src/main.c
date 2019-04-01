@@ -569,6 +569,15 @@ void Protocol(void)
 
 }
 
+void Clear_Keyboard_buffer(void)
+{
+    do  //  PURGE KEY BUFFER OF EVERY THING!!!
+  {
+    chkey = getk();
+  } while (chkey != NULL);
+  chkey=NULL;
+}
+
 void keyboard_click(void)  //ACTIVE
 {//Thomas Cherryhomes key click
   unsigned char i,j;
@@ -741,7 +750,7 @@ void demotitle(void)
   printf("                             |_|                                       \r");
   printf("\n");
   printf("\033[1m\033[31;40m");
-  printf("                              ! - BETA - VERSION - !       \n\n\n");
+  printf("                              ! - BETA VERSION 1.1 - !       \n\n\n");
   printf("\033[1m\033[33;40m");
   printf("    BY: Owen Reynolds 2018                      \n\n");
   printf("CREDIT: Thomas Cherryhomes @ IRATA.ONLINE       \n\n");
@@ -751,11 +760,7 @@ void demotitle(void)
   printf("               - Join us on Facebook - Z88DK ZX Spectrum user group -   \n\n\033[1m\033[37;40m");
   printf("                        -\\/\\/\\- ANY KEY TO CONTINUE -/\\/\\/- \033[37;40m");
   in_WaitForKey();
-  do  //  PURGE KEY BUFFER OF EVERY THING!!!
-  {
-    chkey = getk();
-  } while (chkey != NULL);
-  chkey=NULL;
+  Clear_Keyboard_buffer();
 
   do
   {
@@ -810,11 +815,7 @@ void Help()
   cprintf("\n\n  - ANY KEY TO CONTINUE - ");
   in_WaitForKey();
   
-  do  //  PURGE KEY BUFFER OF EVERY THING!!!
-  {
-    chkey = getk();
-  } while (chkey != NULL);
-  chkey=NULL;
+  Clear_Keyboard_buffer();
 
 }
 void Reset(void)
@@ -909,11 +910,7 @@ void Draw_Menu(void)
   cprintf("\n\n   Space bar - ! GO TERMINAL ! \n");
   cprintf("\n\nPress a Number to change settings");
 
-  do  //  PURGE KEY BUFFER OF EVERY THING!!!
-  {
-    chkey = getk();
-  } while (chkey != NULL);
-  chkey=NULL;
+  Clear_Keyboard_buffer();
 
 }
 
@@ -998,11 +995,7 @@ void menu(void)
     }
   }while (chkey != 32);    // Space key
   
-  do  //  PURGE KEY BUFFER OF EVERY THING!!!
-  {
-    chkey = getk();
-  } while (chkey != NULL);
-  chkey=NULL;
+  Clear_Keyboard_buffer();
   
   clrscr();
   cprintf("\07");
