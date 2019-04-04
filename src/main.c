@@ -571,10 +571,10 @@ void Protocol(void)
 
 void Clear_Keyboard_buffer(void)
 {
-    do  //  PURGE KEY BUFFER OF EVERY THING!!!
+  do  //  PURGE KEY BUFFER OF EVERY THING!!!
   {
     chkey = getk();
-  } while (chkey != NULL);
+  }while (chkey != NULL);
   chkey=NULL;
 }
 
