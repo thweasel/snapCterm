@@ -806,7 +806,7 @@ void title(void)
 }
 */
 
-void Help()
+void Help(void)
 {
   cprintf("\033[2J\033[0m");
   cprintf("\n\nTo toggle the extend mode press and hold Symbol Shift and tap Caps Shift,\nthe border will change from black to green. \nExtend mode keys interpret as below.");
@@ -865,7 +865,7 @@ void Reset(void)
 
 }
 
-void SetPort()
+void SetPort(void)
 {
   rs232_close();
   // quick initalise serial port
@@ -897,6 +897,70 @@ void SetPort()
   rs232_init();
 }
 
+void Hardware_Detect(void)
+{
+  gotoxy(0,21);
+
+  
+  switch (zx_type())
+  {
+    case 0:
+      cprintf("-48K ");
+      break;
+    case 1:
+      cprintf("-128K ");
+      break;
+    case 2:
+      cprintf("-TS2068 ");
+      break;
+    default:
+      cprintf("-Failed type check ");
+      break;
+  }
+
+  switch (zx_model())
+  {
+    case 0:
+      cprintf("-UNKNOWN ");
+      break;
+    case 1:
+      cprintf("-48K ");
+      break;
+    case 2:
+      cprintf("-128K or +2 ");
+      break;
+    case 3:
+      cprintf("-+2A or Pentagon ");
+      break;
+    case 4:
+      cprintf("-+3 ");
+      break;
+    case 5:
+      cprintf("-+2A/ +3 with bus fixed for games ");
+      break;
+    case 6:
+      cprintf("-TS2068 ");
+      break;       
+    default:
+      cprintf("-Failed Model check ");
+      break;
+  }
+  if (zx_128mode())       {cprintf("-128K Mode ");}
+  if (zx_issue3())        {cprintf("-issue3 ");}
+  if (zx_printer())        {cprintf("-Printer ");}
+  if (zx_soundchip())      {cprintf("-SoundChip ");}
+  //if (zx_timexsound())     {cprintf("TimexSound ");} // CRASH
+  if (zx_kempstonmouse())  {cprintf("-KempstonMouse ");}
+  if (zx_fullerstick())    {cprintf("-Fullerstick Joystick");}
+  if (zx_kempston())       {cprintf("-Kempston Joystick ");}
+  //if (zx_iss_stick())      {cprintf("ISS Joystick ");}  // CRASH
+  if (zx_multiface())      {cprintf("-Multiface ");}
+  if (zx_disciple())       {cprintf("-Disciple Floppy ");}
+  //if (zx_plus3fdc())       {cprintf("Plus3 Floppy");}  // CRASH
+  //if (zx_trd())            {cprintf("TRDOS ");}  // WONT BUILD
+  if (zx_extsys())         {cprintf("-BASIC has been moved by an Extension");}
+}
+
 void Draw_Menu(void)
 {
   cprintf("\033[2J\033[0m");
@@ -907,6 +971,8 @@ void Draw_Menu(void)
   cprintf("\n4 - Mono mode OFF 1 2 3 4 5 6 7            > "); if(MonoFlag==0){cprintf("OFF");} else{cprintf("%d",MonoFlag);}
   cprintf("\n5 - HELP!");
   //cprintf("\n6 - Phonebook");
+  cprintf("\n\n\n");
+  cprintf("\n9 - Hardware detect                        > ");
   cprintf("\n\n   Space bar - ! GO TERMINAL ! \n");
   cprintf("\n\nPress a Number to change settings");
 
@@ -984,6 +1050,13 @@ void menu(void)
           Draw_Menu();
           break;                                        
   */    
+        case '39': // Phonebook
+          gotoxy(44,10);
+          cprintf("\033[K OK - HW Detect");
+          
+          Hardware_Detect();
+          break;                                        
+     
         default:
           //gotoxy(0,20);
           //cprintf("\033[K*Keycode* - %d",chkey);
@@ -1002,13 +1075,15 @@ void menu(void)
   chkey=NULL;
 }
 
+
+
 void main(void)
 {
   zx_border(INK_BLACK);
   zx_colour(PAPER_BLACK|INK_WHITE);
   clrscr();
   //title();  //  -- TITLE --  
-  demotitle();
+  //demotitle();
 
   do    // MAIN PROGRAM LOOP
   {
