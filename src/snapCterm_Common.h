@@ -54,7 +54,7 @@ void Draw_Menu(void);
 void menu(void);
 void demotitle(void);
 //void title(void);
-//void Protocol(void);  //  TO be added
-//void Process_RXdata(void);
+//void Protocol(void);  // Main
+//void Process_RXdata(void);  // Main
 
 #endif

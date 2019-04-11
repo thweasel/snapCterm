@@ -4,7 +4,7 @@
 #include <rs232.h>
 #include "snapCterm_Common.h"
 
-void SetPort(void)
+void CommsInit(void)
 {
   rs232_close();
   // quick initalise serial port
@@ -36,8 +36,7 @@ void SetPort(void)
   rs232_init();
 }
 
-
-void RX_RS232(void)
+void RX(void)
 {
   *RXAttr = PAPER_RED;      //Indicate RX started    
   if(rs232_get(&inbyte)!=RS_ERR_NO_DATA)  //any incoming data capture 
@@ -66,7 +65,7 @@ void RX_RS232(void)
   *RXAttr = PAPER_BLACK;     //Indicate RX ended
 }
 
-void TX_RS232(void)
+void TX(void)
 {
     //zx_border(INK_YELLOW);  //DEBUG-TIMING
     *TXAttr = PAPER_GREEN;
@@ -79,8 +78,5 @@ void TX_RS232(void)
     txdata[0] = NULL;
     *TXAttr = PAPER_BLACK;
 }
-
-
-
 
 #endif

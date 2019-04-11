@@ -38,8 +38,6 @@ unsigned char *RXAttr, *TXAttr, *KBAttr;
 uint_fast8_t ClashCorrection, Bold, Underline, Inverse, BlinkSlow, BlinkFast, ForegroundColour, BackgroundColour;
 
 
-
-
 void Reset(void)
 {
   RunFlag = 1;  
@@ -48,9 +46,10 @@ void Reset(void)
   ExtendKeyFlag=0;
   CursorFlag=0;
   
-  RXAttr = zx_cyx2aaddr(0,31);
-  TXAttr = zx_cyx2aaddr(1,31);
-  KBAttr = zx_cyx2aaddr(2,31);
+  KBAttr = zx_cyx2aaddr(0,31);
+  RXAttr = zx_cyx2aaddr(1,31);
+  TXAttr = zx_cyx2aaddr(2,31);
+  
 
   ESC_Code=0;
   CSI_Code=0;
@@ -245,6 +244,7 @@ void Protocol_Reset_All(void)  //  To be called at end of ESC code processing
     } while (--ESC_Num_Int_Index > 0);  // Clears Array and resets the index  
   }
 }
+
 void ESC_Num_Str2Int(void)
 {
   if(ESC_Num_Int_Index<ESC_Num_Int_Size)
@@ -271,7 +271,6 @@ void Native_Support(void)  // For pushing ESC codes which wont cause scrolling a
   fputc_cons(inbyte);
   Protocol_Reset_All();
 }
-
 
 void keyboard_click(void)  //ACTIVE
 {//Thomas Cherryhomes key click
