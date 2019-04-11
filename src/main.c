@@ -6,7 +6,6 @@
 #include <sys/types.h>
 #include <conio.h>
 #include <stdio.h>
-//#include <rs232.h>
 #include <input.h>  //#include <input/input_zx.h>
 #include <string.h>
 #include <sound.h>  // sound for keyboard click
