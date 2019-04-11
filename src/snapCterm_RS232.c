@@ -4,21 +4,6 @@
 #include <rs232.h>
 #include "snapCterm_Common.h"
 
-void TX_RS232(void)
-{
-    //zx_border(INK_YELLOW);  //DEBUG-TIMING
-    *TXAttr = PAPER_GREEN;
-    txbyte_count = 0;
-    do
-    {
-    rs232_put(txdata[txbyte_count]);
-    }while(++txbyte_count<txbytes);
-    *TXAttr = PAPER_BLACK;
-    txbytes = 0;
-    txdata[0] = NULL;
-}
-
-
 void SetPort(void)
 {
   rs232_close();
@@ -50,5 +35,52 @@ void SetPort(void)
   
   rs232_init();
 }
+
+
+void RX_RS232(void)
+{
+  *RXAttr = PAPER_RED;      //Indicate RX started    
+  if(rs232_get(&inbyte)!=RS_ERR_NO_DATA)  //any incoming data capture 
+  {
+    *RXAttr = PAPER_RED + BRIGHT;
+    //zx_border(INK_WHITE);  //DEBUG-TIMING
+    rxbytes = rxdata_Size;    //Use the buffer size selected as the limit of character to catch
+    rxdata[0]=inbyte;         //Buffer the first character
+    rxbyte_count=1;           //Offset the counter for the first bytes we have
+    
+    
+    
+    do
+    {
+      if (rs232_get(&inbyte) != RS_ERR_NO_DATA)  //If character add it to the buffer
+      {
+        rxdata[rxbyte_count]=inbyte;
+      }
+      else  //Else no character record the number of bytes we have collected and exit
+      {
+        rxbytes = rxbyte_count;  //  Drop RX Bytes to the number of bytes we got before RS_ERR_NO_DATA rxbyte_count will exceed and exit loop
+      }
+    }while(++rxbyte_count<rxbytes);
+   
+  }
+  *RXAttr = PAPER_BLACK;     //Indicate RX ended
+}
+
+void TX_RS232(void)
+{
+    //zx_border(INK_YELLOW);  //DEBUG-TIMING
+    *TXAttr = PAPER_GREEN;
+    txbyte_count = 0;
+    do
+    {
+    rs232_put(txdata[txbyte_count]);
+    }while(++txbyte_count<txbytes);
+    txbytes = 0;
+    txdata[0] = NULL;
+    *TXAttr = PAPER_BLACK;
+}
+
+
+
 
 #endif

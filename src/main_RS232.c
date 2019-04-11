@@ -15,7 +15,8 @@
 //#include <ulaplus.h>  //ULA Plus support
 #include "snapCterm_Common.h"
 #include "snapCterm_RS232.h"
-
+  
+  
 
 
 
@@ -334,6 +335,8 @@ void Protocol(void)
 
 }
 
+
+
 void KeyReadMulti(unsigned char time_ms, unsigned char repeat)  //ACTIVE  --  TX loop needs work & more Key mappings
 {
   //Moved the reset below to after TX
@@ -345,6 +348,7 @@ void KeyReadMulti(unsigned char time_ms, unsigned char repeat)  //ACTIVE  --  TX
   {
     if(time_ms>0)
     {
+      *KBAttr = PAPER_CYAN + BRIGHT;
       in_Pause(time_ms);
     }
 
@@ -452,7 +456,7 @@ void KeyReadMulti(unsigned char time_ms, unsigned char repeat)  //ACTIVE  --  TX
       repeat = 1;
     }  
   }while(--repeat!=0);
-  *KBAttr = PAPER_BLACK;
+  
 
   //zx_border(INK_WHITE);  //DEBUG-TIMING
 
@@ -465,11 +469,35 @@ void KeyReadMulti(unsigned char time_ms, unsigned char repeat)  //ACTIVE  --  TX
     kbdata[0]=NULL;
   }
   //zx_border(INK_BLACK);  //DEBUG-TIMING
+  *KBAttr = PAPER_BLACK;
 }
+
+void Process_RXdata(void)
+{
+  
+  rxbyte_count=0;
+  do
+  {  
+    *KBAttr = PAPER_BLUE;     
+    ClearCursor();  // Blank characters wont over write the cursor if its showing
+    //zx_border(INK_BLACK); //DEBUG-TIMING
+    inbyte = rxdata[rxbyte_count];
+    Protocol();  // process inbyte
+
+    //QUICK keyboard check if we are reading alot so we can interupt
+    //zx_border(INK_CYAN);  //DEBUG
+    KeyReadMulti(0,1);  // 2 Reading the keyboard here seemed to break in to ESC [ some times.
+
+  }while(++rxbyte_count<rxbytes);
+
+  rxbytes = 0;
+  *KBAttr = PAPER_BLACK;
+}
+
+
 
 void main(void)
 {
-
 
   zx_border(INK_BLACK);
   zx_colour(PAPER_BLACK|INK_WHITE);
@@ -490,53 +518,17 @@ void main(void)
     {
       DrawCursor();
 
-      //RXDATA  --  move to function?
-      if(rs232_get(&inbyte)!=RS_ERR_NO_DATA)  //any incoming data capture and print
+      RX_RS232();
+
+      if (rxbytes>0)
       {
-        //zx_border(INK_WHITE);  //DEBUG-TIMING
-
-        rxdata[0]=inbyte;         //Buffer the first character
-        rxbytes = rxdata_Size;
-        
-        *RXAttr = PAPER_RED;
-        rxbyte_count=1;
-        do
-        {
-          if (rs232_get(&inbyte) != RS_ERR_NO_DATA)  //If character add it to the buffer
-          {
-            rxdata[rxbyte_count]=inbyte;
-          }
-          else  //Else no character record the number of bytes we have collected
-          {
-            rxbytes = rxbyte_count;
-            rxbyte_count = rxdata_Size+1; //kill the for loop
-          }
-
-        }while(++rxbyte_count<rxbytes);
-        *RXAttr = PAPER_BLACK;
-        //DRAW SCREEN  (Technically process the RX Buffer, act on ESC code and push text to screen)
-        
-        rxbyte_count=0;
-        do
-        {       
-          ClearCursor();  // Blank characters wont over write the cursor if its showing
-          //zx_border(INK_BLACK); //DEBUG-TIMING
-          inbyte = rxdata[rxbyte_count];
-          Protocol();  // process inbyte
-
-          //QUICK keyboard check if we are reading alot so we can interupt
-          
-            //zx_border(INK_CYAN);  //DEBUG
-            KeyReadMulti(0,1);  // 2 Reading the keyboard here seemed to break in to ESC [ some times.
-
-        }while(++rxbyte_count<rxbytes);
+        Process_RXdata();
       }
-      else //no incoming data check keyboard
+      else
       {
-        //zx_border(INK_RED);  // DEBUG
-        KeyReadMulti(10,30);   // 10,30
-        //KeyReadMulti(0,1);
+        KeyReadMulti(10,30);
       }
+      
 
       if(MonoFlag != 0 && MonoFlag != zx_attr(23,31)) {mono();} // Mono flag set, if attr in corner dont match sweep the screen
 
