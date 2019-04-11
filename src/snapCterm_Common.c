@@ -38,6 +38,8 @@ unsigned char *RXAttr, *TXAttr, *KBAttr;
 uint_fast8_t ClashCorrection, Bold, Underline, Inverse, BlinkSlow, BlinkFast, ForegroundColour, BackgroundColour;
 
 
+
+
 void Reset(void)
 {
   RunFlag = 1;  
@@ -63,7 +65,7 @@ void Reset(void)
   ClashCorrection = 0;
   KlashCorrectToggle=1;
 
-  rxdata_Size=4096;
+  rxdata_Size=4096;  //  Change this to a Sizeof() call makes it easier to keep in line with Array size??
   rxbytes=0;
   rxbyte_count=0;
 
