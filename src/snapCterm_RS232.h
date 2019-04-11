@@ -5,5 +5,4 @@ void CommsInit(void);
 void RX(void);
 void TX(void);
 
-
 #endif

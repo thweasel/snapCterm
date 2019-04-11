@@ -6,7 +6,7 @@
 #include <sys/types.h>
 #include <conio.h>
 #include <stdio.h>
-#include <rs232.h>
+//#include <rs232.h>
 #include <input.h>  //#include <input/input_zx.h>
 #include <string.h>
 #include <sound.h>  // sound for keyboard click
@@ -14,8 +14,16 @@
 #include <stdlib.h>
 //#include <ulaplus.h>  //ULA Plus support
 #include "snapCterm_Common.h"
+
+
+
+#ifdef __SNET__
+#include "snapCterm_SNet.h"
+#endif
+
+#ifdef __RS232__
 #include "snapCterm_RS232.h"
-  
+#endif
 //  See snapCterm_Common.c/.h for Global Vars
   
 
