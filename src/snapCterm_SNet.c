@@ -229,8 +229,6 @@ void menu(void)
           else
             {rxdata_Size=small_buf;}
           
-          //if (rxdata_Size==4096){rxdata_Size=18;}else{rxdata_Size=4096;}
-          
           gotoxy(44,4);
           cprintf("\033[K ");
           if(rxdata_Size==no_buf)
@@ -241,8 +239,6 @@ void menu(void)
             {cprintf("BIG (%u bytes)",rxdata_Size);}
           else
             {cprintf("-- (%u bytes)",rxdata_Size);}
-          
-          //if(rxdata_Size==18){cprintf("Small (%u bytes)",rxdata_Size);}else{cprintf("BIG (%u bytes)",rxdata_Size);}
           break;
         case '33': // Clash corrections
           gotoxy(44,5);
