@@ -2,10 +2,7 @@
 /snapCterm-p-rs232/*
 /snapCterm-if1-rs232/*
 /snapCterm-p3-snet/*
-/snapCterm-p-snet/*
-/Build/snapCterm-IF1.tap
-/Build/snapCterm-plus.tap
-/Build/snapCterm-plus3.dsk
+/snapCterm-snet/*
 *.o
 *.tap
 *.dsk

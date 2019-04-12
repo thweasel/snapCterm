@@ -25,12 +25,12 @@ cd ../Build
 
 #Build 128K SNET Plus
 rm ../src/*.o
-rm -r ../snapCterm-p-snet
-mkdir ../snapCterm-p-snet
-cp Makefile.snapCterm-p-snet ../snapCterm-p-snet/Makefile.snapCterm-p-snet
-cd ../snapCterm-p-snet
-make -f ../snapCterm-p-snet/Makefile.snapCterm-p-snet
-cp ../snapCterm-p-snet/sCtpsn.tap ../Build/snapCterm-plus-snet_$Ver.tap
+rm -r ../snapCterm-snet
+mkdir ../snapCterm-snet
+cp Makefile.snapCterm-snet ../snapCterm-snet/Makefile.snapCterm-snet
+cd ../snapCterm-snet
+make -f ../snapCterm-snet/Makefile.snapCterm-snet
+cp ../snapCterm-snet/sCtsn.tap ../Build/snapCterm-snet_$Ver.tap
 cd ../Build
 
 #Build Plus3 RS232 disk

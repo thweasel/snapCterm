@@ -1,4 +1,4 @@
-TARGET_EXEC ?= sCtpsn
+TARGET_EXEC ?= sCtsn
 
 BUILD_DIR ?= ./
 SRC_DIRS ?= ../src
