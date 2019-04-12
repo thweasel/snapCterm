@@ -10,7 +10,7 @@ extern unsigned char txdata[20], txbytes, txbyte_count; //  TX DATA -- 20
 extern unsigned char kbdata[20], kbbytes, kbbyte_count; //  Keyboard buffer and counters
 extern uint16_t rxbytes, rxbyte_count, rxdata_Size;  //  Bytes in RXbuffer array | Counter for RX processing | size of the RX array buffer
 extern uint BaudRate;
-extern uint_fast8_t BaudOption; 
+extern uint_fast8_t BaudOption,io_init; 
 
 
 //ESC Code registers & variables -- Protocol()

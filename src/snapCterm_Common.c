@@ -11,7 +11,8 @@ unsigned char txdata[20], txbytes, txbyte_count; //  TX DATA -- 20
 unsigned char kbdata[20], kbbytes, kbbyte_count; //  Keyboard buffer and counters
 uint16_t rxbytes, rxbyte_count, rxdata_Size;
 uint BaudRate;
-uint_fast8_t BaudOption; 
+uint_fast8_t BaudOption,io_init; 
+
 
 
 //ESC Code registers & variables -- Protocol()

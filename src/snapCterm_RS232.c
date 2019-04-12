@@ -35,6 +35,7 @@ void CommsInit(void)
             }
   
   rs232_init();
+  io_init=1;
 }
 
 void RX(void)
@@ -83,7 +84,7 @@ void TX(void)
 void Draw_Menu(void)
 {
   cprintf("\033[2J\033[0m");
-  cprintf("       snapCterm RS232 EDITION -- menu\n");
+  cprintf("\n        = snapCterm = RS232 = \n");
   cprintf("\n1 - Baud :  4800    9600    19200   38400  > %u",BaudRate);
   cprintf("\n2 - Buffer size Small / Big                > "); if(rxdata_Size==18){cprintf("Small (%u bytes)",rxdata_Size);}else{cprintf("BIG (%u bytes)",rxdata_Size);}
   cprintf("\n3 - Clash correction  ON / OFF             > "); if(KlashCorrectToggle == 1){cprintf("ON");}  else{cprintf("OFF");}
@@ -135,29 +136,29 @@ void menu(void)
               BaudOption = 1;
               break;
           }
-          gotoxy(44,2);
+          gotoxy(44,3);
           printf("\033[K %u",BaudRate);
           break;
         case '32': // Buffer size
           if (rxdata_Size==4096){rxdata_Size=18;}else{rxdata_Size=4096;}
-          gotoxy(44,3);
+          gotoxy(44,4);
           cprintf("\033[K ");
           if(rxdata_Size==18){cprintf("Small (%u bytes)",rxdata_Size);}else{cprintf("BIG (%u bytes)",rxdata_Size);}
           break;
         case '33': // Clash corrections
-          gotoxy(44,4);
+          gotoxy(44,5);
           cprintf("\033[K ");
           if(KlashCorrectToggle == 0) {KlashCorrectToggle=1; cprintf("ON");} else {KlashCorrectToggle=0; cprintf("OFF");}          
           break;
         case '34': // Mono mode
           ToggleMono();
-          gotoxy(44,5);
+          gotoxy(44,6);
           cprintf("\033[K ");
           if(MonoFlag==0){cprintf("OFF");} else{cprintf("\033[K %d",MonoFlag);}
           mono();
           break;
         case '35': // HELP!
-          gotoxy(44,6);
+          gotoxy(44,7);
           cprintf("\033[K Help");
           Help();
           Draw_Menu();
@@ -170,7 +171,7 @@ void menu(void)
           break;                                        
   */    
         case '39': // Phonebook
-          gotoxy(44,10);
+          gotoxy(44,11);
           cprintf("\033[K OK - HW Detect");
           
           Hardware_Detect();

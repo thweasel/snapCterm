@@ -494,7 +494,7 @@ void Process_RXdata(void)
 
 void main(void)
 {
-
+  io_init=0;
   zx_border(INK_BLACK);
   zx_colour(PAPER_BLACK|INK_WHITE);
   clrscr();
@@ -505,8 +505,11 @@ void main(void)
   {
     //Init statics clean
     Reset();
-    menu();    
-    CommsInit();
+    do
+    {
+      menu();    
+      CommsInit();
+    }while(io_init==0);
   
     do  // Terminal mode
     {
