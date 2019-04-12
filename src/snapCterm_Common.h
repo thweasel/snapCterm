@@ -50,8 +50,6 @@ void keyboard_click(void);
 void Clear_Keyboard_buffer(void);
 void Hardware_Detect(void);
 void Help(void);
-void Draw_Menu(void);
-void menu(void);
 void demotitle(void);
 //void title(void);
 //void Protocol(void);  // Main
