@@ -6,3 +6,7 @@
 /Build/snapCterm-IF1.tap
 /Build/snapCterm-plus.tap
 /Build/snapCterm-plus3.dsk
+*.o
+*.tap
+*.dsk
+*.szx

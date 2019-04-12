@@ -185,7 +185,7 @@ void menu(void)
           Draw_Menu();
           break;                                        
   */    
-        case '39': // Phonebook
+        case '39': // Hardware Detection
           gotoxy(44,11);
           cprintf("\033[K OK - HW Detect");
           

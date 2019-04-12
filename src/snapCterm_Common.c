@@ -299,7 +299,7 @@ void Clear_Keyboard_buffer(void)
 
 void Hardware_Detect(void)
 {
-  gotoxy(0,21);
+  gotoxy(0,22);
 
   
   switch (zx_type())

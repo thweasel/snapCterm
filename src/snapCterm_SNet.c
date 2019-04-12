@@ -115,15 +115,23 @@ void menu(void)
       switch (chkey)
       {
         case '31': // Address  
+
+          //flush host_port and port_str, Defaults to port 23 when empty
+          host_port=sizeof(port_str);
+          do
+          {
+            port_str[host_port] = NULL;
+          } while (--host_port>0);
+
           // CLEAR MENU
           gotoxy(15,3);
           cprintf("\033[K ");
 
           // GET HOSTNAME
-          gotoxy(5,20);
+          gotoxy(5,19);
           cprintf("ENTER IP/DNS ADDRESS");
-          gotoxy(5,21);
-          cprintf(">");
+          gotoxy(5,20);
+          cprintf("> ");
           
           i=0;
           do  // Get keys a-z A-Z 0-9 . [Enter] for the DNS/IP address. Stop on enter or end of Array
@@ -137,7 +145,7 @@ void menu(void)
               
               if(chkey!= 12)  // process backspace delete manually
               {
-                  if ((chkey >='a' && chkey <='z') || (chkey >='A' && chkey <='Z') || (chkey >='0' && chkey <='9') || (chkey == 10) || (chkey =='.'))
+                  if ((chkey >='a' && chkey <='z') || (chkey >='A' && chkey <='Z') || (chkey >='0' && chkey <='9') || (chkey == 10) || (chkey =='.') || (chkey == '-') || (chkey == '_'))
                   { //Valid characters add to address and display
                     ClearCursor();
                     host_name[i]=chkey;
@@ -161,16 +169,16 @@ void menu(void)
           host_name[i-1]=NULL;
 
           // CLEAR input lines
-          gotoxy(5,20);
+          gotoxy(5,19);
           cprintf("\033[K ");
-          gotoxy(5,21);
+          gotoxy(5,20);
           cprintf("\033[K ");
             
           // Next step GET PORT
+          gotoxy(5,19);
+          cprintf("ENTER PORT (Default 23)");
           gotoxy(5,20);
-          cprintf("ENTER PORT");
-          gotoxy(5,21);
-          cprintf(">");
+          cprintf("> ");
           
           i=0;
           do  //  Get keys 0-9 [Enter] for the port upto 5 digits or until enter pressed
@@ -209,9 +217,9 @@ void menu(void)
           host_port = atoi(port_str);  // Convert the port "string" to an int, if 0 then set it to 23 default port
           if (host_port == 0) {host_port=23;}
             // CLEAR input lines
-          gotoxy(5,20);
+          gotoxy(5,19);
           cprintf("\033[K ");
-          gotoxy(5,21);
+          gotoxy(5,20);
           cprintf("\033[K ");
 
             // DONE update menu
@@ -265,7 +273,7 @@ void menu(void)
           Draw_Menu();
           break;                                        
   */    
-        case '39': // Phonebook
+        case '39': // Hardware Detection
           gotoxy(44,11);
           cprintf("\033[K OK - HW Detect");
           
