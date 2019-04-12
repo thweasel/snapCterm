@@ -140,10 +140,25 @@ void menu(void)
           printf("\033[K %u",BaudRate);
           break;
         case '32': // Buffer size
-          if (rxdata_Size==4096){rxdata_Size=18;}else{rxdata_Size=4096;}
+          if(rxdata_Size==no_buf)
+            {rxdata_Size=small_buf;} 
+          else if(rxdata_Size==small_buf)
+            {rxdata_Size=big_buf;} 
+          else if(rxdata_Size==big_buf)
+            {rxdata_Size=no_buf;}
+          else
+            {rxdata_Size=small_buf;}
+          
           gotoxy(44,4);
           cprintf("\033[K ");
-          if(rxdata_Size==18){cprintf("Small (%u bytes)",rxdata_Size);}else{cprintf("BIG (%u bytes)",rxdata_Size);}
+          if(rxdata_Size==no_buf)
+            {cprintf("No Buffer",rxdata_Size);} 
+          else if(rxdata_Size==small_buf)
+            {cprintf("small (%u bytes)",rxdata_Size);} 
+          else if(rxdata_Size==big_buf)
+            {cprintf("BIG (%u bytes)",rxdata_Size);}
+          else
+            {cprintf("-- (%u bytes)",rxdata_Size);}
           break;
         case '33': // Clash corrections
           gotoxy(44,5);

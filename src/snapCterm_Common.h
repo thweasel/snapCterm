@@ -4,6 +4,7 @@
 //GLOBALS
 
 //Transmission TX & RX
+extern uint16_t no_buf, small_buf, big_buf;
 extern unsigned char chkey, inbyte;  // deleted bytecount lastbyte -- To delete
 extern unsigned char rxdata[4096], ; //  RXDATA -- 10[/] 20[/] 40[-] 80[x]  @9600 ~18 @19200 ~50/60
 extern unsigned char txdata[20], txbytes, txbyte_count; //  TX DATA -- 20
@@ -11,6 +12,7 @@ extern unsigned char kbdata[20], kbbytes, kbbyte_count; //  Keyboard buffer and 
 extern uint16_t rxbytes, rxbyte_count, rxdata_Size;  //  Bytes in RXbuffer array | Counter for RX processing | size of the RX array buffer
 extern uint BaudRate;
 extern uint_fast8_t BaudOption,io_init; 
+
 
 
 //ESC Code registers & variables -- Protocol()
@@ -26,6 +28,7 @@ extern unsigned char *CursorAddr;
 extern uint_fast8_t ExtendKeyFlag, CursorFlag, CursorMask, MonoFlag, KlashCorrectToggle;  // deleted - ESCFlag -
 extern int cursorX, cursorY;
 extern uint_fast8_t RunFlag;  
+
 
 
 
@@ -50,8 +53,7 @@ void keyboard_click(void);
 void Clear_Keyboard_buffer(void);
 void Hardware_Detect(void);
 void Help(void);
-void demotitle(void);
-//void title(void);
+void title(void);
 //void Protocol(void);  // Main
 //void Process_RXdata(void);  // Main
 

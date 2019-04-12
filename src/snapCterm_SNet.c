@@ -84,7 +84,7 @@ void Draw_Menu(void)
     cprintf("\033[2J\033[0m");
     cprintf("\n        = snapCterm = SPECTRANET = \n ");
     cprintf("\n1 - Address  > %s:%d",host_name,host_port);
-    cprintf("\n2 - Buffer size Small / Big                > "); if(rxdata_Size==18){cprintf("Small (%u bytes)",rxdata_Size);}else{cprintf("BIG (%u bytes)",rxdata_Size);}
+    cprintf("\n2 - Buffer size No / Small / Big           > "); if(rxdata_Size==no_buf){cprintf("No Buffer",rxdata_Size);} else if(rxdata_Size==small_buf){cprintf("small (%u bytes)",rxdata_Size);} else if(rxdata_Size==big_buf){cprintf("BIG (%u bytes)",rxdata_Size);}else{cprintf("-- (%u bytes)",rxdata_Size);}
     cprintf("\n3 - Clash correction  ON / OFF             > "); if(KlashCorrectToggle == 1){cprintf("ON");}  else{cprintf("OFF");}
     cprintf("\n4 - Mono mode OFF 1 2 3 4 5 6 7            > "); if(MonoFlag==0){cprintf("OFF");} else{cprintf("%d",MonoFlag);}
     cprintf("\n5 - HELP!");
@@ -219,10 +219,30 @@ void menu(void)
           cprintf("%s:%d",host_name,host_port);
           break;
         case '32': // Buffer size
-          if (rxdata_Size==4096){rxdata_Size=18;}else{rxdata_Size=4096;}
+                    
+          if(rxdata_Size==no_buf)
+            {rxdata_Size=small_buf;} 
+          else if(rxdata_Size==small_buf)
+            {rxdata_Size=big_buf;} 
+          else if(rxdata_Size==big_buf)
+            {rxdata_Size=no_buf;}
+          else
+            {rxdata_Size=small_buf;}
+          
+          //if (rxdata_Size==4096){rxdata_Size=18;}else{rxdata_Size=4096;}
+          
           gotoxy(44,4);
           cprintf("\033[K ");
-          if(rxdata_Size==18){cprintf("Small (%u bytes)",rxdata_Size);}else{cprintf("BIG (%u bytes)",rxdata_Size);}
+          if(rxdata_Size==no_buf)
+            {cprintf("No Buffer",rxdata_Size);} 
+          else if(rxdata_Size==small_buf)
+            {cprintf("small (%u bytes)",rxdata_Size);} 
+          else if(rxdata_Size==big_buf)
+            {cprintf("BIG (%u bytes)",rxdata_Size);}
+          else
+            {cprintf("-- (%u bytes)",rxdata_Size);}
+          
+          //if(rxdata_Size==18){cprintf("Small (%u bytes)",rxdata_Size);}else{cprintf("BIG (%u bytes)",rxdata_Size);}
           break;
         case '33': // Clash corrections
           gotoxy(44,5);
