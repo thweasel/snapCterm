@@ -43,6 +43,7 @@ uint_fast8_t ClashCorrection, Bold, Underline, Inverse, BlinkSlow, BlinkFast, Fo
 
 void Reset(void)
 {
+  io_init=0;
 
   big_buf = sizeof(rxdata);
 
