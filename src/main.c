@@ -559,7 +559,6 @@ void Process_RXdata(void)
 
 void main(void)
 {
-  io_init=0;
   zx_border(INK_BLACK);
   zx_colour(PAPER_BLACK|INK_WHITE);
   clrscr();
