@@ -2,10 +2,13 @@
 #include <conio.h>
 #include <input.h>  //#include <input/input_zx.h>
 #include <spectrum.h>
+#include <string.h>
+
+//Spectranet headers
 #include <sys/socket.h>
 #include <sockpoll.h>
 #include <netdb.h>
-#include <string.h>
+
 #include "snapCterm_Common.h"
 
 
@@ -13,6 +16,12 @@ int sockfd, pfd, host_port, result;
 struct sockaddr_in remoteaddr;
 struct hostent *he;
 char host_name[64], port_str[6];
+/*  This stuff is setup in snapCterm_Common.h
+unsigned char rxdata[4096], ;  //  RX buffer
+uint16_t rxbytes, rxbyte_count, rxdata_Size;  //  RX, bytes, counter, size (buffer)
+unsigned char txdata[20], txbytes, txbyte_count; //  TX, bytes, counter, size (buffer)
+*/
+
 int i; //menu input counter
 
 void CommsInit(void)
@@ -23,10 +32,10 @@ void CommsInit(void)
     cprintf("\nResolving : %s",host_name);
     he=gethostbyname(host_name);
 
-    //Create the socket
+    //Create the socket (local port)
     sockfd=socket(AF_INET,SOCK_STREAM,0);
     if (sockfd == -1)
-    {"\nSocket create failed";} 
+    {   cprintf("\nSocket create failed"); in_WaitForKey();  } 
     else 
     {
         cprintf("\n%u Socket",sockfd);
@@ -41,7 +50,6 @@ void CommsInit(void)
             {io_init=0; cprintf("\nConnection FAILED! - Any key to continue"); in_WaitForKey();}
     }
 
-
     clrscr();
     
 }
@@ -50,10 +58,10 @@ void RX(void)
 {
     *RXAttr = PAPER_RED;      //Indicate RX started    
     pfd=poll_fd(sockfd);
-    if (pfd & POLLIN)
+    if (pfd & POLLIN)         // Poll for data
     {
         *RXAttr = PAPER_RED + BRIGHT;
-        rxbytes=recv(sockfd,rxdata,rxdata_Size,0);
+        rxbytes=recv(sockfd,rxdata,rxdata_Size,0);  //  Returns number of bytes moved from socket(sockfd), to rxdata buffer, upto rxdata_Size bytes (MAX), 0 because...
     }
     *KBAttr = PAPER_BLACK;
 }
@@ -62,11 +70,11 @@ void TX(void)
 {
     if (io_init==1)
     {    
-        *TXAttr = PAPER_GREEN;
+        *TXAttr = PAPER_GREEN;  //Indicate TX started
         txbyte_count = 0;
         do
-        {
-            send(sockfd,&txdata[txbyte_count],sizeof(unsigned char), 0);
+        {  //could get bold with this and change the size to a multiple of size uchar for the amount of characters to send, pushing in one go...
+            send(sockfd,&txdata[txbyte_count],sizeof(unsigned char), 0);  // Pushes one Uchar at a time to socket(sockfd), & address of byte (txdata[] eliment), size of data to send, 0 because...
         }while(++txbyte_count<txbytes);
         txbytes = 0;
         txdata[0] = NULL;
