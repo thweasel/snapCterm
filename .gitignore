@@ -1,3 +1,9 @@
-/snapCterm-p3/*
-/snapCterm-p/*
-/snapCterm-if1/*
+/snapCterm-p3-rs232/*
+/snapCterm-p-rs232/*
+/snapCterm-if1-rs232/*
+/snapCterm-p3-snet/*
+/snapCterm-snet/*
+*.o
+*.tap
+*.dsk
+*.szx
