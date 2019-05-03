@@ -147,7 +147,7 @@ void menu(void)
               do
               {
                   DrawCursor();
-                  in_Pause(10);
+                  in_Pause(300);
                   chkey = getk();
               }while(chkey == NULL);
               

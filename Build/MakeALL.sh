@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-Ver="Beta2.1"
+Ver="Beta2.0.1"
 
 #Build RS232 IF1
 pwd
