@@ -12,25 +12,33 @@ void CommsInit(void)
   switch (BaudOption)
             {
               case 1:
+                rs232_params(RS_BAUD_1200|RS_STOP_1|RS_BITS_8,RS_PAR_NONE);
+                BaudRate = 1200;
+                break;
+              case 2:
+                rs232_params(RS_BAUD_2400|RS_STOP_1|RS_BITS_8,RS_PAR_NONE);
+                BaudRate = 2400;
+                break;
+              case 3:
                 rs232_params(RS_BAUD_4800|RS_STOP_1|RS_BITS_8,RS_PAR_NONE);
                 BaudRate = 4800;
                 break;
-              case 2:
+              case 4:
                 BaudRate = 9600;
                 rs232_params(RS_BAUD_9600|RS_STOP_1|RS_BITS_8,RS_PAR_NONE);  //  Works solid
                 break;
-              case 3:
+              case 5:
                 BaudRate = 19200;
                 rs232_params(RS_BAUD_19200|RS_STOP_1|RS_BITS_8,RS_PAR_NONE);
                 break;
-              case 4:
+              case 6:
                 BaudRate = 38400;
                 rs232_params(RS_BAUD_38400|RS_STOP_1|RS_BITS_8,RS_PAR_NONE);
                 break;          
               default:
                 BaudRate = 9600;
                 rs232_params(RS_BAUD_9600|RS_STOP_1|RS_BITS_8,RS_PAR_NONE);
-                BaudOption = 2;
+                BaudOption = 4;
                 break;
             }
   
@@ -85,7 +93,7 @@ void Draw_Menu(void)
 {
   cprintf("\033[2J\033[0m");
   cprintf("\n        = snapCterm = RS232 = \n");
-  cprintf("\n1 - Baud :  4800    9600    19200   38400  > %u",BaudRate);
+  cprintf("\n1 - Baud : 1200 2400 4800 9600 19200 38400 > %u",BaudRate);
   cprintf("\n2 - Buffer size Small / Big                > "); if(rxdata_Size==18){cprintf("Small (%u bytes)",rxdata_Size);}else{cprintf("BIG (%u bytes)",rxdata_Size);}
   cprintf("\n3 - Clash correction  ON / OFF             > "); if(KlashCorrectToggle == 1){cprintf("ON");}  else{cprintf("OFF");}
   cprintf("\n4 - Mono mode OFF 1 2 3 4 5 6 7            > "); if(MonoFlag==0){cprintf("OFF");} else{cprintf("%d",MonoFlag);}
@@ -118,24 +126,30 @@ void menu(void)
         case '31': // Baud rate     
           BaudOption++;
           switch (BaudOption)
-          {
-            case 1:
-              BaudRate = 4800;
-              break;
-            case 2:
-              BaudRate = 9600;
-              break;
-            case 3:
-              BaudRate = 19200;
-              break;
-            case 4:
-              BaudRate = 38400;
-              break;          
-            default:
-              BaudRate = 4800;
-              BaudOption = 1;
-              break;
-          }
+            {
+              case 1:
+                BaudRate = 1200;
+                break;
+              case 2:
+                BaudRate = 2400;
+                break;
+              case 3:
+                BaudRate = 4800;
+                break;
+              case 4:
+                BaudRate = 9600;
+                break;
+              case 5:
+                BaudRate = 19200;
+                break;
+              case 6:
+                BaudRate = 38400;
+                break;          
+              default:
+                BaudRate = 1200;
+                BaudOption = 1;
+                break;
+            }
           gotoxy(44,3);
           printf("\033[K %u",BaudRate);
           break;

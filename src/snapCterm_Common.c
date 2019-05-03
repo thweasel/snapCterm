@@ -48,7 +48,7 @@ void Reset(void)
   big_buf = sizeof(rxdata);
 
   RunFlag = 1;  
-  BaudOption = 2;
+  BaudOption = 4;
   BaudRate = 9600;
   ExtendKeyFlag=0;
   CursorFlag=0;
