@@ -559,6 +559,10 @@ void Process_RXdata(void)
 
 void main(void)
 {
+
+  bpoke(0x5C3B, bpeek(0x5C3B) | 0x8); /*Alistair's workaround to autoboot key mode issue */
+
+
   zx_border(INK_BLACK);
   zx_colour(PAPER_BLACK|INK_WHITE);
   clrscr();
