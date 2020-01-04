@@ -27,7 +27,7 @@
 
 //  See snapCterm_Common.c/.h for Global Vars
   
-char version_num[] = "Beta 2.0.3;
+char version_num[] = "Beta 2.0.4";
 
 #ifdef __SNET__
 char edition[] = "Spectranet";
@@ -427,6 +427,13 @@ void KeyReadMulti(unsigned char time_ms, unsigned char repeat)  //ACTIVE  --  TX
           if      (chkey == 0x0E) {ExtendKeyFlag++;}                                  // Symbol shift condition
           else if (chkey == 0x0C) {kbdata[kbbytes] = 0x08   ;kbbytes = kbbytes+1;}    // Key Back Space (0x0C Form feed > Back space)
           else if (chkey == 0x0A) {kbdata[kbbytes] = 0x0D   ;kbbytes = kbbytes+1;}    // Key ENTER (0x0A NL line feed, new line > 0x13 Carriage Return)        
+
+          else if (chkey == 0xC3) {kbdata[kbbytes] = '|'   ;kbbytes = kbbytes+1;}
+          else if (chkey == 0xC5) {kbdata[kbbytes] = ']'   ;kbbytes = kbbytes+1;}
+          else if (chkey == 0xC6) {kbdata[kbbytes] = '['   ;kbbytes = kbbytes+1;}
+          else if (chkey == 0xCD) {kbdata[kbbytes] = '\\'   ;kbbytes = kbbytes+1;}
+          else if (chkey == 0xE2) {kbdata[kbbytes] = '~'   ;kbbytes = kbbytes+1;}
+          
           else                    {kbdata[kbbytes] = chkey  ;kbbytes = kbbytes+1;}    // UNCHANGED
         }
         else if (ExtendKeyFlag == 1)  // Level 1 extended mode - PC Keys
