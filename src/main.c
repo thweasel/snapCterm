@@ -27,7 +27,7 @@
 
 //  See snapCterm_Common.c/.h for Global Vars
   
-char version_num[] = "Beta 2.0.4";
+char version_num[] = "Beta 2.1.0";
 
 #ifdef __SNET__
 char edition[] = "Spectranet";
