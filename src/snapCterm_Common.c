@@ -107,42 +107,36 @@ void DrawCursor(void)
   if (cursorX <79)
   {
 	  CursorMask = cursorX%8;  
+    CursorAddr = zx_py2saddr(cursorY*8+7)+cursorX*3;
 	  switch (CursorMask)
 	  {
 		  case 0 :
-		  CursorAddr = zx_pxy2saddr(cursorX*3, cursorY*8+7,255);
+		  
 		  *CursorAddr= *CursorAddr ^ (224);	   
 		  break;
 		  case 1 :
-		  CursorAddr=zx_pxy2saddr(cursorX*3, cursorY*8+7,255);
 		  *CursorAddr= *CursorAddr ^ (28);
 		  break;
 		  case 2 :  //SPLIT over 2 bytes
-		  CursorAddr=zx_pxy2saddr(cursorX*3, cursorY*8+7,255);
 		  *CursorAddr= *CursorAddr ^ (3);
-		  CursorAddr=zx_pxy2saddr(cursorX*3+3, cursorY*8+7,255);
+      CursorAddr = CursorAddr + 1;
 		  *CursorAddr= *CursorAddr ^ (128);
 		  break;
 		  case 3 :
-		  CursorAddr=zx_pxy2saddr(cursorX*3, cursorY*8+7,255);
 		  *CursorAddr= *CursorAddr ^ (112);
 		  break;
 		  case 4 :
-		  CursorAddr=zx_pxy2saddr(cursorX*3, cursorY*8+7,255);
 		  *CursorAddr= *CursorAddr ^ (14);
 		  break;
 		  case 5 :  //SPLIT over 2 bytes
-		  CursorAddr=zx_pxy2saddr(cursorX*3, cursorY*8+7,255);
 		  *CursorAddr= *CursorAddr ^ (1);
-		  CursorAddr=zx_pxy2saddr(cursorX*3+3, cursorY*8+7,255);
-		  *CursorAddr= *CursorAddr ^ (192);
+      CursorAddr = CursorAddr + 1;
+		  *CursorAddr= *CursorAddr ^ (192); 
 		  break;
 		  case 6 :
-		  CursorAddr=zx_pxy2saddr(cursorX*3, cursorY*8+7,255);
 		  *CursorAddr= *CursorAddr ^ (56);
 		  break;
 		  case 7 :
-		  CursorAddr=zx_pxy2saddr(cursorX*3, cursorY*8+7,255);
 		  *CursorAddr= *CursorAddr ^ (7);
 		  break;		  
 		  }
