@@ -9,7 +9,7 @@ I consider this a beta version, mainly because it doesn't have any file transfer
 
 Another limitation of this terminal is it ONLY support ASCII NOT UTF8.  While you can telnet into a linux machine, some applications such as NANO cause problems.
 
-
+**Builds with Z88DK 2.1 (07/02/2021)**
 
 Future work:
 
