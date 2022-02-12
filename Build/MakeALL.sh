@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
-Ver="Beta2.0.4"
+Ver="Beta2.1.0"
+# Build using Z88DK 2.1 & SpectraNet Libraries
 
 #Build RS232 IF1
 pwd
