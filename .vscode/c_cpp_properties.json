@@ -3,12 +3,12 @@
         {
             "name": "Linux",
             "includePath": [
-                "~/z88dk",
+                "~/bin/z88dk",
                 "${workspaceFolder}/**",
-                "~/z88dk/include"
+                "~/bin/z88dk/include"
             ],
             "defines": [],
-            "compilerPath": "~/z88dk/bin/zcc",
+            "compilerPath": "~/bin/z88dk/bin/zcc",
             "cStandard": "c11",
             "cppStandard": "c++17",
             "intelliSenseMode": "clang-x64"
