@@ -28,7 +28,7 @@ uint_fast8_t   ESC_Num_Int_Index,ESC_Num_Int_Counter;  //  Index for the ESC_Num
 //To Sort
 unsigned char *CursorAddr;
 uint_fast8_t ExtendKeyFlag, CursorFlag, CursorMask, MonoFlag, KlashCorrectToggle;  // deleted - ESCFlag -
-int cursorX, cursorY;
+uint_fast8_t cursorX, cursorY;
 uint_fast8_t RunFlag;  
 
 
@@ -98,8 +98,11 @@ void Reset(void)
 
 void DrawCursor(void)
 {
+  //Cursor X needs converting to a pixel X then /8 to find the Memory address offset
+  // Z88DK 2.1 (Release version) has a bug in zx_pxy2saddr() that crashes the system
   cursorX = wherex();
   cursorY = wherey();
+  CursorAddr = zx_py2saddr(cursorY*8+7)+((cursorX*3)/8);
 
   if    (CursorFlag==0) {CursorFlag=1;}
   else                  {CursorFlag=0;}
@@ -107,11 +110,10 @@ void DrawCursor(void)
   if (cursorX <79)
   {
 	  CursorMask = cursorX%8;  
-    CursorAddr = zx_py2saddr(cursorY*8+7)+cursorX*3;
+    
 	  switch (CursorMask)
 	  {
-		  case 0 :
-		  
+		  case 0 :		  
 		  *CursorAddr= *CursorAddr ^ (224);	   
 		  break;
 		  case 1 :
