@@ -89,18 +89,19 @@ void Draw_Menu(void)
         strcpy(host_name,"127.0.0.1"); 
         host_port=23;
     }
+    //       ----------==========----------==========
     cprintf("\033[2J\033[0m");
-    cprintf("\n        = snapCterm = SPECTRANET = \n ");
-    cprintf("\n1 - Address  > %s:%d",host_name,host_port);
-    cprintf("\n2 - Buffer size No / Small / Big           > "); if(rxdata_Size==no_buf){cprintf("No Buffer",rxdata_Size);} else if(rxdata_Size==small_buf){cprintf("small (%u bytes)",rxdata_Size);} else if(rxdata_Size==big_buf){cprintf("BIG (%u bytes)",rxdata_Size);}else{cprintf("-- (%u bytes)",rxdata_Size);}
-    cprintf("\n3 - Clash correction  ON / OFF             > "); if(KlashCorrectToggle == 1){cprintf("ON");}  else{cprintf("OFF");}
-    cprintf("\n4 - Mono mode OFF 1 2 3 4 5 6 7            > "); if(MonoFlag==0){cprintf("OFF");} else{cprintf("%d",MonoFlag);}
+    cprintf("\n    = snapCterm = SPECTRANET = \n ");
+    cprintf("\n1 - Address: \n   > %s:%d \n",host_name,host_port);
+    cprintf("\n2 - Buffer size No / Small / Big \n   > "); if(rxdata_Size==no_buf){cprintf("No Buffer",rxdata_Size);} else if(rxdata_Size==small_buf){cprintf("small (%u bytes)",rxdata_Size);} else if(rxdata_Size==big_buf){cprintf("BIG (%u bytes)",rxdata_Size);}else{cprintf("-- (%u bytes)",rxdata_Size);}
+    cprintf("\n3 - Clash correction  ON / OFF   \n   > "); if(KlashCorrectToggle == 1){cprintf("ON");}  else{cprintf("OFF");}
+    cprintf("\n4 - Mono mode OFF 1 2 3 4 5 6 7  \n   > "); if(MonoFlag==0){cprintf("OFF");} else{cprintf("%d",MonoFlag);}
     cprintf("\n5 - HELP!");
     //cprintf("\n6 - Phonebook");
-    cprintf("\n\n\n");
-    cprintf("\n9 - Hardware detect                        > ");
+    //cprintf("\n\n\n");
+    //cprintf("\n9 - Hardware detect              > ");
     cprintf("\n\n   Space bar - ! GO TERMINAL ! \n");
-    cprintf("\n\nPress a Number to change settings");
+    cprintf("\nPress a Number to change settings");
 
     Clear_Keyboard_buffer();
 
@@ -132,7 +133,7 @@ void menu(void)
           } while (--host_port>0);
 
           // CLEAR MENU
-          gotoxy(15,3);
+          gotoxy(5,4);
           cprintf("\033[K ");
 
           // GET HOSTNAME
@@ -177,9 +178,11 @@ void menu(void)
           host_name[i-1]=NULL;
 
           // CLEAR input lines
-          gotoxy(5,19);
+          gotoxy(0,19);
           cprintf("\033[K ");
-          gotoxy(5,20);
+          gotoxy(0,20);
+          cprintf("\033[K ");
+          gotoxy(0,21);
           cprintf("\033[K ");
             
           // Next step GET PORT
@@ -231,7 +234,7 @@ void menu(void)
           cprintf("\033[K ");
 
             // DONE update menu
-          gotoxy(15,3);
+          gotoxy(5,4);  // Possition for printing Address
           cprintf("%s:%d",host_name,host_port);
           break;
         case '32': // Buffer size
