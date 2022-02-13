@@ -96,6 +96,7 @@ void Reset(void)
 
 }
 
+#ifdef __80col__
 void DrawCursor(void)
 {
   //Cursor X needs converting to a pixel X then /8 to find the Memory address offset
@@ -144,6 +145,48 @@ void DrawCursor(void)
 		  }
   }
 }
+#endif
+
+#ifdef __40col__
+void DrawCursor(void)
+{
+  //Cursor X needs converting to a pixel X then /8 to find the Memory address offset
+  // Z88DK 2.1 (Release version) has a bug in zx_pxy2saddr() that crashes the system
+  cursorX = wherex();
+  cursorY = wherey();
+  CursorAddr = zx_py2saddr(cursorY*8+7)+((cursorX*6)/8);
+
+  if    (CursorFlag==0) {CursorFlag=1;}
+  else                  {CursorFlag=0;}
+
+  if (cursorX <39)
+  {
+	  CursorMask = cursorX%4;  
+    
+	  switch (CursorMask)
+	  {
+		  case 0 :		  
+		  *CursorAddr= *CursorAddr ^ 0b11111100;
+		  break;
+		  case 1 :
+		  *CursorAddr= *CursorAddr ^ 0b00000011;
+      CursorAddr++;
+      *CursorAddr= *CursorAddr ^ 0b11110000;
+		  break;
+		  case 2 :  //SPLIT over 2 bytes
+		  *CursorAddr= *CursorAddr ^ 0b00001111;
+      CursorAddr++;
+		  *CursorAddr= *CursorAddr ^ 0b11000000;
+		  break;
+		  case 3 :
+		  *CursorAddr= *CursorAddr ^ 0b00111111;
+		  break;  
+		  }
+  }
+}
+
+#endif
+
 
 void ClearCursor(void)  // Call this when not putting none printing characters on the screen
 {

@@ -48,15 +48,29 @@ char edition[] = "Spectranet";
 
 
 //Font stuff
+#ifdef __80col__
 #asm  
 SECTION data_user ;
 PUBLIC _oemascii
 _oemascii:
       //Files must be loaded in order of lowest value to highest
-      BINARY "../src/oemasciiext1.bin.chr" ;
-      BINARY "../src/oemasciiext2.bin.chr" ;
-      BINARY "../src/oemasciiext3.bin.chr" ;
+      BINARY "../fonts/80col/80col_oemasciiext1.bin.chr" ;
+      BINARY "../fonts/80col/80col_oemasciiext2.bin.chr" ;
+      BINARY "../fonts/80col/80col_oemasciiext3.bin.chr" ;
 #endasm
+#endif
+
+#ifdef __40col__
+#asm  
+SECTION data_user ;
+PUBLIC _oemascii
+_oemascii:
+      //Files must be loaded in order of lowest value to highest
+      BINARY "../fonts/40col/40col_oemasciiext1.bin.chr" ;
+      BINARY "../fonts/40col/40col_oemasciiext2.bin.chr" ;
+      BINARY "../fonts/40col/40col_oemasciiext3.bin.chr" ;
+#endasm
+#endif
 
 void title(void)
 { 
