@@ -248,7 +248,7 @@ void menu(void)
           else
             {rxdata_Size=small_buf;}
           
-          gotoxy(44,4);
+          gotoxy(4,7);
           cprintf("\033[K ");
           if(rxdata_Size==no_buf)
             {cprintf("No Buffer",rxdata_Size);} 
@@ -260,19 +260,19 @@ void menu(void)
             {cprintf("-- (%u bytes)",rxdata_Size);}
           break;
         case '33': // Clash corrections
-          gotoxy(44,5);
+          gotoxy(4,9);
           cprintf("\033[K ");
           if(KlashCorrectToggle == 0) {KlashCorrectToggle=1; cprintf("ON");} else {KlashCorrectToggle=0; cprintf("OFF");}          
           break;
         case '34': // Mono mode
           ToggleMono();
-          gotoxy(44,6);
+          gotoxy(4,11);
           cprintf("\033[K ");
           if(MonoFlag==0){cprintf("OFF");} else{cprintf("\033[K %d",MonoFlag);}
           mono();
           break;
         case '35': // HELP!
-          gotoxy(44,7);
+          gotoxy(4,12);
           cprintf("\033[K Help");
           Help();
           Draw_Menu();
@@ -285,7 +285,7 @@ void menu(void)
           break;                                        
   */    
         case '39': // Hardware Detection
-          gotoxy(44,11);
+          gotoxy(5,11);
           cprintf("\033[K OK - HW Detect");
           
           Hardware_Detect();
