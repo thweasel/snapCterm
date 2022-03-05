@@ -12,16 +12,15 @@
 //#include <sound/bit.h>
 #include <stdlib.h>
 //#include <ulaplus.h>  //ULA Plus support
-#include "snapCterm_Common.h"
-
+#include "./include/snapCterm_Common.h" 
 
 
 #ifdef __SNET__
-#include "snapCterm_SNet.h"
+#include "./include/snapCterm_SNet.h"
 #endif
 
 #ifdef __RS232__
-#include "snapCterm_RS232.h"
+#include "./include/snapCterm_RS232.h"
 #endif
 
 
