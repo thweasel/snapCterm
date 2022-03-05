@@ -1,7 +1,7 @@
 # snapCterm
 ZX Spectrum Terminal
 
-Basics of an ANSI 80 column serial terminal for the plus machines (not IF1 could be compiler for IF1)
+Basics of an ANSI 40 & 80 column serial terminal for the plus machines (not IF1 could be compiler for IF1)
 
 ASCII characters (OEM extended), ANSI ESC codes & COLOUR.  Includes classic spectrum colour clash.
 
