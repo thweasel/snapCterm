@@ -1,6 +1,6 @@
 TARGET_EXEC ?= sCtIF1rs
 
-BUILD_DIR ?= ./
+BUILD_DIR ?= ./bin
 SRC_DIRS ?= ../src
 
 CC=zcc

@@ -15,7 +15,8 @@
         "rs232.h": "c",
         "socket.h": "c",
         "netdb.h": "c",
-        "sockpoll.h": "c"
+        "sockpoll.h": "c",
+        "fzx.h": "c"
     },
     "C_Cpp.errorSquiggles": "Disabled",
     "C_Cpp.dimInactiveRegions": false

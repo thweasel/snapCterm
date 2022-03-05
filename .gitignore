@@ -3,7 +3,10 @@
 /snapCterm-if1-rs232/*
 /snapCterm-p3-snet/*
 /snapCterm-snet/*
+pub/
 *.o
 *.tap
 *.dsk
 *.szx
+*.bin
+*.wav
