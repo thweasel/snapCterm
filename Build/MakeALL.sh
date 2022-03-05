@@ -1,10 +1,10 @@
 #!/bin/bash
 
-Ver="Beta2.1.1"
+Ver="Beta2.2"
 Date=`date`
 
 buildSet=(snapCterm-40col snapCterm-80col)
-buildNetType=(if1-rs232 p-rs232 p3-rs232 snet)
+buildNetType=(if1-rs232 plus-rs232 plus3-rs232 snet)
 
 mkdir bin
 mkdir src
@@ -15,11 +15,11 @@ if [[ -d ./pub/$Ver/ ]]
 then
     echo "We already got one "
     rm -R ./pub/$Ver/
-    mkdir ./pub/$Ver/
+    mkdir ./pub/$Ver/    
 else 
-    mkdir ./pub/$Ver/
-    
+    mkdir ./pub/$Ver/    
 fi
+mkdir ./pub/$Ver/release/
 printf "snapCterm %s Built on %s" "$Ver" "$Date" > ./pub/$Ver/ReadMe.txt
 
 
@@ -46,10 +46,10 @@ for build in "${buildSet[@]}" ;do
     echo "produce tap and dsk files"
     pushd bin
     pwd
-    cp *.tap ../pub/$Ver/$Ver-$build-$netType.tap
-    cp *.dsk ../pub/$Ver/$Ver-$build-$netType.dsk
-    mv *.tap ../pub/$Ver/$build-$netType.tap
-    mv *.dsk ../pub/$Ver/$build-$netType.dsk
+    cp *.tap ../pub/$Ver/$build-$netType-$Ver.tap
+    cp *.dsk ../pub/$Ver/$build-$netType-$Ver.dsk
+    mv *.tap ../pub/$Ver/release/$build-$netType.tap
+    mv *.dsk ../pub/$Ver/release/$build-$netType.dsk
     popd
 
     echo cp -r ./bin/ ./pub/$Ver/$Ver-$build-$netType/
