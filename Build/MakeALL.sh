@@ -14,6 +14,8 @@ mkdir pub
 if [[ -d ./pub/$Ver/ ]]
 then
     echo "We already got one "
+    rm -R ./pub/$Ver/
+    mkdir ./pub/$Ver/
 else 
     mkdir ./pub/$Ver/
     
@@ -32,10 +34,8 @@ for build in "${buildSet[@]}" ;do
     for netType in "${buildNetType[@]}" ;do
     mfile="Makefile.$build-$netType"
     echo $mfile
-    make -f $mfile > ./bin/$build-$netType-build.log
-
-
-
+    make -f $mfile >& ./bin/$build-$netType-build.log
+    cat ./bin/$build-$netType-build.log | grep Error
 
     if [[ -d ./pub/$Ver/$build-$netType/ ]]
     then
@@ -45,6 +45,7 @@ for build in "${buildSet[@]}" ;do
 
     echo "produce tap and dsk files"
     pushd bin
+    pwd
     cp *.tap ../pub/$Ver/$Ver-$build-$netType.tap
     cp *.dsk ../pub/$Ver/$Ver-$build-$netType.dsk
     mv *.tap ../pub/$Ver/$build-$netType.tap
