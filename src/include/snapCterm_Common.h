@@ -52,8 +52,8 @@ void Native_Support(void);
 void keyboard_click(void);
 void Clear_Keyboard_buffer(void);
 void Hardware_Detect(void);
-void Help(void);
-void title(void);
+//void Help(void);
+//void title(void);
 //void Protocol(void);  // Main
 //void Process_RXdata(void);  // Main
 

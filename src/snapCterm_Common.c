@@ -401,18 +401,7 @@ void Hardware_Detect(void)
   if (zx_extsys())         {cprintf("-BASIC has been moved by an Extension");}
 }
 
-void Help(void)
-{
-  cprintf("\033[2J\033[0m");
-  cprintf("\n\nTo toggle the extend mode press and hold Symbol Shift and tap Caps Shift,\nthe border will change from black to green. \nExtend mode keys interpret as below.");
-  cprintf("\n\nC - CTRL Key (Control mode Cyan border)\nK - Clash correction (Toggle On/Off)\nM - Mono mode (1 > 7 > Colour mode)\nT - Tab key\nE - Escape key\nU - Page UP\nD - Page DOWN\nCursor keys (5 6 7 8) - Left, Down, Up Right\nR - Reset");
-  cprintf("\n\nBlack border - Normal mode\nGreen border - Extended mode\nCyan border - CTRL+ mode (Toggle Symbol Shift + Caps Shift to exit)");
-  cprintf("\n  - ANY KEY TO CONTINUE - ");
-  in_WaitForKey();
-  
-  Clear_Keyboard_buffer();
 
-}
 
 
 

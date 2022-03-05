@@ -13,6 +13,7 @@
 #include <stdlib.h>
 //#include <ulaplus.h>  //ULA Plus support
 #include "./include/snapCterm_Common.h" 
+#include "./include/snapCterm_TextPages.h"
 
 
 #ifdef __SNET__
@@ -26,25 +27,9 @@
 
 //  See snapCterm_Common.c/.h for Global Vars
   
-char version_num[] = "Beta 2.1.1";
-
-#ifdef __SNET__
-char edition[] = "Spectranet";
-#endif
-
-#ifdef __RS232__
-  #ifdef __IF1__
-    char edition[] = "RS232 IF1";
-  #endif
-  #ifdef __128K__
-    char edition[] = "RS232 128K/PLUS";
-  #endif
-  #ifdef __PLUS3__
-    char edition[] = "RS232 MIGHTY +3";
-  #endif
-#endif
-
-
+//
+//  VERSION AND EDITION INFORMATION MOVED TO snapCterm_TextPages.c
+//
 
 //Font stuff
 #ifdef __80col__
@@ -69,96 +54,6 @@ _oemascii:
       BINARY "../fonts/40col/40col_oemasciiext2.bin.chr" ;
       BINARY "../fonts/40col/40col_oemasciiext3.bin.chr" ;
 #endasm
-#endif
-
-#ifdef __80col__
-void title(void)
-{ 
-  char titlescroll = 24;
-  
-  for (uint8_t z=0;z<10;++z) {DrawCursor();  in_Pause(50);}
-  printf("\033[32;40m");
-  printf("[\373].80 columns  [\373].ASCII oem set  [\373].ANSI  [\373].colour clash   \n\n");
-  for (uint8_t z=0;z<10;++z) {DrawCursor();  in_Pause(100);}  
-  printf("Terminal ready... ");
-  for (uint8_t z=0;z<10;++z) {DrawCursor();  in_Pause(100);}
-  printf("\07"); in_Pause(50);
-  ClearCursor();
-  printf("\033[37;40m");
-  printf("\n\033[1m");
-  printf("                                     _____  _                          \r");
-  printf("                                    /  __ \\| |                         \r");
-  printf("           ___  _ __    __ _  _ __  | /  \\/| |_  ___  _ __  _ __ ___   \r");
-  printf("          / __|| '_ \\  / _` || '_ \\ | |    | __|/ _ \\| '__|| '_ ` _ \\  \r\033[0m");
-  printf("          \\__ \\| | | || (_| || |_) || \\__/\\| |_|  __/| |   | | | | | | \r");
-  printf("          |___/|_| |_| \\__,_|| .__/  \\____/ \\__|\\___||_|   |_| |_| |_| \r");
-  printf("                             | |                                       \r");
-  printf("                             |_|                                       \r");
-  printf("\n");
-  printf("\033[1m\033[31;40m");
-  gotoxy(40-(sizeof(edition)+sizeof(version_num)-16/2),wherey());
-  printf("! - %s %s - !\n\n\n",edition,version_num);
-  printf("\033[1m\033[33;40m");
-  printf("    BY: Owen Reynolds 2018                      \n\n");
-  printf("CREDIT: Thomas Cherryhomes @ IRATA.ONLINE       \n\n");
-  printf("\033[1m\033[37;40m");
-  printf("                        Built using Z88DK - C compiler for Z80s         \n\n");
-  printf("\033[1m\033[34;40m");
-  printf("               - Join us on Facebook - Z88DK ZX Spectrum user group -   \n\n\033[1m\033[37;40m");
-  printf("                        -\\/\\/\\- ANY KEY TO CONTINUE -/\\/\\/- \033[37;40m");
-  in_WaitForKey();
-  Clear_Keyboard_buffer();
-
-  do
-  {
-    printf("\r");  
-    newline_attr();
-  }while(--titlescroll!=0);
-}
-#endif
-
-#ifdef __40col__
-void title(void)
-{ 
-  char titlescroll = 24;
-  
-  for (uint8_t z=0;z<10;++z) {DrawCursor();  in_Pause(50);}
-  printf("\033[32;40m");
-  printf("[\373].40 columns  [\373].ASCII oem set  \n[\373].ANSI  [\373].colour clash   \n");
-  for (uint8_t z=0;z<10;++z) {DrawCursor();  in_Pause(100);}  
-  printf("Terminal ready... ");
-  for (uint8_t z=0;z<10;++z) {DrawCursor();  in_Pause(100);}
-  printf("\07"); in_Pause(50);
-  ClearCursor();
-  printf("\033[37;40m");
-  printf("\n\033[1m");
-  //      ----------==========----------==========
-  printf("\n");
-  printf("\n");
-  printf("snapCterm 40 column edition\n");
-  printf("\n");
-  printf("\n");
-  printf("\n");
-  printf("\033[1m\033[31;40m");
-  gotoxy(20-(sizeof(edition)+sizeof(version_num)-16/2),wherey());
-  printf("! - %s %s - !\n\n\n",edition,version_num);
-  printf("\033[1m\033[33;40m");
-  printf("    BY: Owen Reynolds 2018                      \n");
-  printf("CREDIT: Thomas Cherryhomes @IRATA.ONLINE       \n\n");
-  printf("\033[1m\033[37;40m");
-  printf("Built using Z88DK - C compiler for Z80s\n");
-  printf("\033[1m\033[34;40m");
-  printf("Facebook: Z88DK ZX Spectrum user group -\n\n\033[1m\033[37;40m");
-  printf("  -\\/\\/\\- ANY KEY TO CONTINUE -/\\/\\/-\033[37;40m");
-  in_WaitForKey();
-  Clear_Keyboard_buffer();
-
-  do
-  {
-    printf("\r");  
-    newline_attr();
-  }while(--titlescroll!=0);
-}
 #endif
 
 void Protocol(void)
