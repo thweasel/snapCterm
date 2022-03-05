@@ -9,7 +9,7 @@
 #include <sockpoll.h>
 #include <netdb.h>
 
-#include "snapCterm_Common.h"
+#include "./include/snapCterm_Common.h"
 
 
 int sockfd, pfd, host_port, result;

@@ -3,7 +3,7 @@
 #include <spectrum.h>
 #include <input.h>  //#include <input/input_zx.h>
 #include <rs232.h>
-#include "snapCterm_Common.h"
+#include "./include/snapCterm_Common.h"
 
 void CommsInit(void)
 {
@@ -93,14 +93,14 @@ void Draw_Menu(void)
 {
   cprintf("\033[2J\033[0m");
   cprintf("\n        = snapCterm = RS232 = \n");
-  cprintf("\n1 - Baud : 1200 2400 4800 9600 19200 38400 > %u",BaudRate);
-  cprintf("\n2 - Buffer size Small / Big                > "); if(rxdata_Size==18){cprintf("Small (%u bytes)",rxdata_Size);}else{cprintf("BIG (%u bytes)",rxdata_Size);}
-  cprintf("\n3 - Clash correction  ON / OFF             > "); if(KlashCorrectToggle == 1){cprintf("ON");}  else{cprintf("OFF");}
-  cprintf("\n4 - Mono mode OFF 1 2 3 4 5 6 7            > "); if(MonoFlag==0){cprintf("OFF");} else{cprintf("%d",MonoFlag);}
-  cprintf("\n5 - HELP!");
+  cprintf("\n1 Baud:1200 2400 4800 9600 19200 38400\n   > %u",BaudRate);
+  cprintf("\n2 Buffer size Small / Big             \n   > "); if(rxdata_Size==18){cprintf("Small (%u bytes)",rxdata_Size);}else{cprintf("BIG (%u bytes)",rxdata_Size);}
+  cprintf("\n3 Clash correction  ON / OFF          \n   > "); if(KlashCorrectToggle == 1){cprintf("ON");}  else{cprintf("OFF");}
+  cprintf("\n4 Mono mode OFF 1 2 3 4 5 6 7         \n   > "); if(MonoFlag==0){cprintf("OFF");} else{cprintf("%d",MonoFlag);}
+  cprintf("\n5 HELP!");
   //cprintf("\n6 - Phonebook");
   cprintf("\n\n\n");
-  cprintf("\n9 - Hardware detect                        > ");
+  //cprintf("\n9 - Hardware detect                        > ");
   cprintf("\n\n   Space bar - ! GO TERMINAL ! \n");
   cprintf("\n\nPress a Number to change settings");
 
@@ -150,8 +150,10 @@ void menu(void)
                 BaudOption = 1;
                 break;
             }
-          gotoxy(44,3);
+          
+          gotoxy(4,4);
           printf("\033[K %u",BaudRate);
+          
           break;
         case '32': // Buffer size
           if(rxdata_Size==no_buf)
@@ -163,7 +165,7 @@ void menu(void)
           else
             {rxdata_Size=small_buf;}
           
-          gotoxy(44,4);
+          gotoxy(4,6);
           cprintf("\033[K ");
           if(rxdata_Size==no_buf)
             {cprintf("No Buffer",rxdata_Size);} 
@@ -175,19 +177,19 @@ void menu(void)
             {cprintf("-- (%u bytes)",rxdata_Size);}
           break;
         case '33': // Clash corrections
-          gotoxy(44,5);
+          gotoxy(4,8);
           cprintf("\033[K ");
           if(KlashCorrectToggle == 0) {KlashCorrectToggle=1; cprintf("ON");} else {KlashCorrectToggle=0; cprintf("OFF");}          
           break;
         case '34': // Mono mode
           ToggleMono();
-          gotoxy(44,6);
+          gotoxy(4,10);
           cprintf("\033[K ");
           if(MonoFlag==0){cprintf("OFF");} else{cprintf("\033[K %d",MonoFlag);}
           mono();
           break;
         case '35': // HELP!
-          gotoxy(44,7);
+          gotoxy(4,12);
           cprintf("\033[K Help");
           Help();
           Draw_Menu();
@@ -200,7 +202,7 @@ void menu(void)
           break;                                        
   */    
         case '39': // Hardware Detection
-          gotoxy(44,11);
+          gotoxy(4,11);
           cprintf("\033[K OK - HW Detect");
           
           Hardware_Detect();
