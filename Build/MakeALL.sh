@@ -6,6 +6,11 @@ Date=`date`
 buildSet=(snapCterm-40col snapCterm-80col)
 buildNetType=(if1-rs232 p-rs232 p3-rs232 snet)
 
+mkdir bin
+mkdir src
+mkdir pub
+
+
 if [[ -d ./pub/$Ver/ ]]
 then
     echo "We already got one "
@@ -14,6 +19,8 @@ else
     
 fi
 printf "snapCterm %s Built on %s" "$Ver" "$Date" > ./pub/$Ver/ReadMe.txt
+
+
 
 echo "Cleaning up"
 pwd
